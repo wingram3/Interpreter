@@ -3,7 +3,8 @@ JAVAC = javac
 JFLAGS = -g
 
 # Define the source files
-SOURCES = com/lox/Lox.java com/lox/Scanner.java com/lox/Token.java com/lox/TokenType.java com/tool/GenerateAst.java
+SOURCES = com/lox/Lox.java com/lox/Scanner.java com/lox/Token.java com/lox/TokenType.java com/lox/Expr.java
+
 # Define the class files (object files)
 CLASSES = $(SOURCES:.java=.class)
 
