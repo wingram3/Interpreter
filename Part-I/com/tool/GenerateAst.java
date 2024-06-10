@@ -5,6 +5,12 @@ import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * This script is a small command-line app that generates java files.
+ * It is a tool used to generate abstract syntax tree classes. "Expr.java",
+ * for example, once created, is treated as any other java file in the interpreter
+ * implementation. This just automates how that file gets authored.
+ */
 public class GenerateAst {
 
     public static void main(String[] args) throws IOException {
@@ -14,6 +20,7 @@ public class GenerateAst {
         }
         String outputDir = args[0];
 
+        // Description of each type and its fields.
         defineAst(
             outputDir,
             "Expr",
@@ -43,6 +50,7 @@ public class GenerateAst {
 
         defineVisitor(writer, baseName, types);
 
+        // The AST classes.
         for (String type : types) {
             String className = type.split(":")[0].trim();
             String fields = type.split(":")[1].trim();
@@ -55,6 +63,50 @@ public class GenerateAst {
 
         writer.println("}");
         writer.close();
+    }
+
+    private static void defineType(
+        PrintWriter writer,
+        String baseName,
+        String className,
+        String fieldList
+    ) {
+        writer.println(
+            "    static class " + className + " extends " + baseName + " {"
+        );
+
+        // Constructor.
+        writer.println("        " + className + "(" + fieldList + ") {");
+
+        // Store parameters in fields.
+        String[] fields = fieldList.split(", ");
+        for (String field : fields) {
+            String name = field.split(" ")[1];
+            writer.println("            this." + name + " = " + name + ";");
+        }
+
+        writer.println("        }");
+
+        // Visitor pattern.
+        writer.println();
+        writer.println("        @Override");
+        writer.println("        <R> R accept(Visitor<R> visitor) {");
+        writer.println(
+            "            return visitor.visit" +
+            className +
+            baseName +
+            "(this);"
+        );
+        writer.println("        }");
+
+        // Fields.
+        writer.println();
+        for (String field : fields) {
+            writer.println("        final " + field + ";");
+        }
+
+        writer.println("    }");
+        writer.println();
     }
 
     private static void defineVisitor(
@@ -76,47 +128,6 @@ public class GenerateAst {
                 baseName.toLowerCase() +
                 ");"
             );
-        }
-
-        writer.println("    }");
-        writer.println();
-    }
-
-    private static void defineType(
-        PrintWriter writer,
-        String baseName,
-        String className,
-        String fieldList
-    ) {
-        writer.println(
-            "    static class " + className + " extends " + baseName + " {"
-        );
-
-        writer.println("        " + className + "(" + fieldList + ") {");
-
-        String[] fields = fieldList.split(", ");
-        for (String field : fields) {
-            String name = field.split(" ")[1];
-            writer.println("            this." + name + " = " + name + ";");
-        }
-
-        writer.println("        }");
-
-        // Visitor pattern.
-        writer.println();
-        writer.println("        @Override");
-        writer.println("        <R> R accept(Visitor<R> visitor) {");
-        writer.println(
-            "            return visitor.visit" +
-            className +
-            baseName +
-            "(this);"
-        );
-        writer.println("        }");
-
-        writer.println();
-        for (String field : fields) {
-            writer.println("        final " + field + ";");
         }
 
         writer.println("    }");
