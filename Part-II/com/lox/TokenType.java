@@ -1,7 +1,7 @@
 package com.lox;
 
 enum TokenType {
-    // single-char tokens
+    // single-char tokens.
     LEFT_PAREN,
     RIGHT_PAREN,
     LEFT_BRACE,
@@ -14,7 +14,7 @@ enum TokenType {
     SLASH,
     STAR,
 
-    // One or two char tokens
+    // One or two char tokens.
     BANG,
     BANG_EQUAL,
     EQUAL,
@@ -24,12 +24,12 @@ enum TokenType {
     LESS,
     LESS_EQUAL,
 
-    // Literals
+    // Literals.
     IDENTIFIER,
     STRING,
     NUMBER,
 
-    // Keywords
+    // Keywords.
     AND,
     CLASS,
     ELSE,

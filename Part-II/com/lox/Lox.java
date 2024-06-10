@@ -23,12 +23,16 @@ public class Lox {
         }
     }
 
+    // Read in a file and run it.
     private static void runFile(String path) throws IOException {
         byte[] bytes = Files.readAllBytes(Paths.get(path));
         run(new String(bytes, Charset.defaultCharset()));
+
+        // Indicate an error in the exit code.
         if (hadError) System.exit(65);
     }
 
+    // interactive prompt (REPL).
     private static void runPrompt() throws IOException {
         InputStreamReader input = new InputStreamReader(System.in);
         BufferedReader reader = new BufferedReader(input);
@@ -51,6 +55,7 @@ public class Lox {
         }
     }
 
+    // tells the user a syntax error occurred on a given line.
     static void error(int line, String message) {
         report(line, "", message);
     }
