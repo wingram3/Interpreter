@@ -27,17 +27,41 @@ class Parser {
         }
     }
 
-    // expression -> equality ("," equality)* ;
+    // expression -> ternary ("," ternary)* ;
     private Expr expression() {
-        Expr expr = equality();
+        Expr expr = ternary();
 
         while (match(COMMA)) {
             Token operator = previous();
-            Expr right = equality();
+            Expr right = ternary();
             expr = new Expr.Binary(expr, operator, right);
         }
 
         return expr;
+    }
+
+    // ternary -> equality ( "?" expression ":" expression )?
+    private Expr ternary() {
+        Expr condition = equality();
+
+        if (match(QMARK)) {
+            Token operator1 = previous();
+            Expr left = expression();
+            consume(
+                COLON,
+                "Expected ':' after expression as part of conditional."
+            );
+            Token operator2 = previous();
+            Expr right = expression();
+            condition = new Expr.Ternary(
+                condition,
+                operator1,
+                left,
+                operator2,
+                right
+            );
+        }
+        return condition;
     }
 
     // equality -> comparison ( ( "!=" | "==" ) comparison )* ;
