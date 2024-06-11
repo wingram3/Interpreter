@@ -4,6 +4,10 @@ import static com.lox.TokenType.*;
 
 import java.util.List;
 
+/**
+ * In the parser class, each grammar rule becomes a method inside this new class.
+ * The parser class uses recursive descent as its parsing technique.
+ */
 class Parser {
 
     private static class ParseError extends RuntimeException {}
@@ -23,14 +27,23 @@ class Parser {
         }
     }
 
-    // expression -> equality ;
+    // expression -> equality ("," equality)* ;
     private Expr expression() {
-        return equality();
+        Expr expr = equality();
+
+        while (match(COMMA)) {
+            Token operator = previous();
+            Expr right = equality();
+            expr = new Expr.Binary(expr, operator, right);
+        }
+
+        return expr;
     }
 
     // equality -> comparison ( ( "!=" | "==" ) comparison )* ;
     private Expr equality() {
         Expr expr = comparison();
+
         while (match(BANG_EQUAL, EQUAL_EQUAL)) {
             Token operator = previous();
             Expr right = comparison();
