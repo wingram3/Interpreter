@@ -1,5 +1,9 @@
 package com.lox;
 
+/**
+ * Uses the Visitor design pattern. The return type of the
+ * visitor methods is java.lang.Object.
+ */
 class Interpreter implements Expr.Visitor<Object> {
 
     void interpret(Expr expression) {
@@ -11,16 +15,19 @@ class Interpreter implements Expr.Visitor<Object> {
         }
     }
 
+    // Convert the literal systax tree node into a runtime value.
     @Override
     public Object visitLiteralExpr(Expr.Literal expr) {
         return expr.value;
     }
 
+    // Recursively evaluate the expression within the parentheses and return it.
     @Override
     public Object visitGroupingExpr(Expr.Grouping expr) {
         return evaluate(expr.expression);
     }
 
+    // Evaluate the operand expression, then apply the unary opertor to the result of that.
     @Override
     public Object visitUnaryExpr(Expr.Unary expr) {
         Object right = evaluate(expr.right);
@@ -37,6 +44,7 @@ class Interpreter implements Expr.Visitor<Object> {
         return null;
     }
 
+    // Pretty much the same as unary, but with two operands instead of one.
     @Override
     public Object visitBinaryExpr(Expr.Binary expr) {
         Object left = evaluate(expr.left);
@@ -85,6 +93,8 @@ class Interpreter implements Expr.Visitor<Object> {
         return null;
     }
 
+    // Evaluates the three expressions that make up a ternary expression.
+    // Then essentially just uses Java's ternary operator to return the right thing.
     @Override
     public Object visitTernaryExpr(Expr.Ternary expr) {
         Object condition = evaluate(expr.condition);
@@ -94,6 +104,7 @@ class Interpreter implements Expr.Visitor<Object> {
         return (isTruthy(condition) ? left : right);
     }
 
+    // Sends an expression back into the interpreter's visitor implementation.
     private Object evaluate(Expr expr) {
         return expr.accept(this);
     }
@@ -112,6 +123,7 @@ class Interpreter implements Expr.Visitor<Object> {
         return a.equals(b);
     }
 
+    // Convert a Lox value to a string.
     private String stringify(Object object) {
         if (object == null) return "nil";
 

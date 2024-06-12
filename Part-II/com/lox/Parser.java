@@ -7,6 +7,7 @@ import java.util.List;
 /**
  * In the parser class, each grammar rule becomes a method inside this new class.
  * The parser class uses recursive descent as its parsing technique.
+ * Returns a stream of tokens.
  */
 class Parser {
 
