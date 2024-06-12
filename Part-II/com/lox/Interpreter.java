@@ -63,13 +63,16 @@ class Interpreter implements Expr.Visitor<Object> {
             case PLUS:
                 if (left instanceof Double && right instanceof Double) {
                     return (double) left + (double) right;
-                }
-                if (left instanceof String && right instanceof String) {
-                    return (String) left + (String) right;
+                } else if (
+                    (left instanceof String && right instanceof String) ||
+                    (left instanceof String && right instanceof Double) ||
+                    (left instanceof Double && right instanceof String)
+                ) {
+                    return stringify(left) + stringify(right);
                 }
                 throw new RuntimeError(
                     expr.operator,
-                    "Operands must be two numbers or two strings."
+                    "Operands must be 2 numbers, 2 strings, or 1 number and 1 string."
                 );
             case GREATER:
                 checkNumberOperands(expr.operator, left, right);
