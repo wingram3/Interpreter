@@ -1,15 +1,18 @@
 package com.lox;
 
+import java.util.List;
+
 /**
  * Uses the Visitor design pattern. The return type of the
  * visitor methods is java.lang.Object.
  */
-class Interpreter implements Expr.Visitor<Object> {
+class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
-    void interpret(Expr expression) {
+    void interpret(List<Stmt> statements) {
         try {
-            Object value = evaluate(expression);
-            System.out.println(stringify(value));
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
         } catch (RuntimeError error) {
             Lox.runtimeError(error);
         }
@@ -56,14 +59,19 @@ class Interpreter implements Expr.Visitor<Object> {
                 return (double) left - (double) right;
             case SLASH:
                 checkNumberOperands(expr.operator, left, right);
-                return (double) left / (double) right;
+
+                // Any div. by zero results in an error. Does not follow IEEE 754.
+                if ((double) right != 0.0) {
+                    return (double) left / (double) right;
+                }
+                throw new RuntimeError(expr.operator, "Divide by zero error.");
             case STAR:
                 checkNumberOperands(expr.operator, left, right);
                 return (double) left * (double) right;
             case PLUS:
                 if (left instanceof Double && right instanceof Double) {
                     return (double) left + (double) right;
-                } else if (
+                } else if ( // Adding a number to a string results in a string.
                     (left instanceof String && right instanceof String) ||
                     (left instanceof String && right instanceof Double) ||
                     (left instanceof Double && right instanceof String)
@@ -110,6 +118,26 @@ class Interpreter implements Expr.Visitor<Object> {
     // Sends an expression back into the interpreter's visitor implementation.
     private Object evaluate(Expr expr) {
         return expr.accept(this);
+    }
+
+    // Statement analogue to evaluate().
+    private void execute(Stmt stmt) {
+        stmt.accept(this);
+    }
+
+    // Evaluate the inner expression and discard the value.
+    @Override
+    public Void visitExpressionStmt(Stmt.Expression stmt) {
+        evaluate(stmt.expression);
+        return null;
+    }
+
+    // Convert the inner expression's value to a string and print it to stdout.
+    @Override
+    public Void visitPrintStmt(Stmt.Print stmt) {
+        Object value = evaluate(stmt.expression);
+        System.out.println(stringify(value));
+        return null;
     }
 
     // false and nil are false, everything else is true.

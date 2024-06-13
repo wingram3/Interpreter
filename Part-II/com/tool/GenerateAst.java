@@ -20,7 +20,7 @@ public class GenerateAst {
         }
         String outputDir = args[0];
 
-        // Description of each type and its fields.
+        // Description of each expression type and its fields.
         defineAst(
             outputDir,
             "Expr",
@@ -30,6 +30,16 @@ public class GenerateAst {
                 "Literal  : Object value",
                 "Unary    : Token operator, Expr right",
                 "Ternary  : Expr condition, Token operator1, Expr left, Token operator2, Expr right"
+            )
+        );
+
+        // Description of each statement type and its fields.
+        defineAst(
+            outputDir,
+            "Stmt",
+            Arrays.asList(
+                "Expression : Expr expression",
+                "Print      : Expr expression"
             )
         );
     }
