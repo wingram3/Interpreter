@@ -4,7 +4,8 @@ import java.util.List;
 
 /**
  * Uses the Visitor design pattern. The return type of the
- * visitor methods is java.lang.Object.
+ * visitor methods for expressions is java.lang.Object.
+ * For statements it is Void.
  */
 class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
@@ -12,13 +13,14 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         try {
             for (Stmt statement : statements) {
                 execute(statement);
+                // System.out.println(new AstPrinter().print(statement));
             }
         } catch (RuntimeError error) {
             Lox.runtimeError(error);
         }
     }
 
-    // Convert the literal systax tree node into a runtime value.
+    // Convert the literal syntax tree node into a runtime value.
     @Override
     public Object visitLiteralExpr(Expr.Literal expr) {
         return expr.value;

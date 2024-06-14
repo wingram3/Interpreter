@@ -1,9 +1,13 @@
 package com.lox;
 
-class AstPrinter implements Expr.Visitor<String> {
+class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 
     String print(Expr expr) {
         return expr.accept(this);
+    }
+
+    String print(Stmt stmt) {
+        return stmt.accept(this);
     }
 
     @Override
@@ -35,6 +39,16 @@ class AstPrinter implements Expr.Visitor<String> {
             expr.left,
             expr.right
         );
+    }
+
+    @Override
+    public String visitExpressionStmt(Stmt.Expression stmt) {
+        return parenthesize(";", stmt.expression);
+    }
+
+    @Override
+    public String visitPrintStmt(Stmt.Print stmt) {
+        return parenthesize("print", stmt.expression);
     }
 
     /** Takes a name and subexpression and wraps them in parentheses. */
