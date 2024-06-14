@@ -6,9 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * In the parser class, each grammar rule becomes a method inside this new class.
- * The parser class uses recursive descent as its parsing technique.
- * Returns a stream of tokens.
+ * In the parser class, each grammar rule is a method. The parser
+ * class uses recursive descent as its parsing technique.
  */
 class Parser {
 
@@ -88,7 +87,7 @@ class Parser {
         return new Stmt.Expression(expr);
     }
 
-    // ternary -> equality ( "?" expression ":" expression )?
+    // ternary -> equality ( "?" expression ":" expression )? ;
     private Expr ternary() {
         Expr condition = equality();
 

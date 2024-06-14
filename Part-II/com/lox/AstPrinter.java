@@ -32,6 +32,11 @@ class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     @Override
+    public String visitVariableExpr(Expr.Variable expr) {
+        return expr.name.lexeme;
+    }
+
+    @Override
     public String visitTernaryExpr(Expr.Ternary expr) {
         return parenthesize(
             expr.operator1.lexeme + expr.operator2.lexeme,
@@ -51,7 +56,12 @@ class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         return parenthesize("print", stmt.expression);
     }
 
-    /** Takes a name and subexpression and wraps them in parentheses. */
+    @Override
+    public String visitVarStmt(Stmt.Var stmt) {
+        return parenthesize(stmt.name.lexeme, stmt.initializer);
+    }
+
+    // Takes a name and subexpression and wraps them in parentheses.
     private String parenthesize(String name, Expr... exprs) {
         StringBuilder builder = new StringBuilder();
 
