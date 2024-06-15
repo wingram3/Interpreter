@@ -29,13 +29,13 @@ class Parser {
         return statements;
     }
 
-    // expression -> ternary ("," ternary)* ;
+    // expression  -> assignment ( "," assignment )* ;
     private Expr expression() {
-        Expr expr = ternary();
+        Expr expr = assignment();
 
         while (match(COMMA)) {
             Token operator = previous();
-            Expr right = ternary();
+            Expr right = assignment();
             expr = new Expr.Binary(expr, operator, right);
         }
 
@@ -85,6 +85,26 @@ class Parser {
         Expr expr = expression();
         consume(SEMICOLON, "Expect ';' after expression.");
         return new Stmt.Expression(expr);
+    }
+
+    // assignment  -> IDENTIFIER "=" assignment
+    //                | ternary ;
+    private Expr assignment() {
+        Expr expr = equality();
+
+        if (match(EQUAL)) {
+            Token equals = previous();
+            Expr value = assignment();
+
+            if (expr instanceof Expr.Variable) {
+                Token name = ((Expr.Variable) expr).name;
+                return new Expr.Assign(name, value);
+            }
+
+            error(equals, "Invalid assignment target.");
+        }
+
+        return expr;
     }
 
     // ternary -> equality ( "?" expression ":" expression )? ;

@@ -16,7 +16,10 @@ printStmt   -> "print" expression ";" ;
 
 EXPRESSIONS:
 ------------
-expression  -> ternary ( "," ternary )* ;
+expression  -> assignment ( "," assignment )* ;
+
+assignment  -> IDENTIFIER "=" assignment
+               | ternary ;
 
 ternary     -> equality ( "?" expression ":" expression )? ;
 
