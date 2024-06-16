@@ -16,9 +16,19 @@ class Environment {
         this.enclosing = enclosing;
     }
 
+    // I promise this horrendous formatting is not my fault...
     Object get(Token name) {
-        if (values.containsKey(name.lexeme)) {
+        if (
+            values.containsKey(name.lexeme) && values.get(name.lexeme) != null
+        ) {
             return values.get(name.lexeme);
+        } else if (
+            values.containsKey(name.lexeme) && values.get(name.lexeme) == null
+        ) {
+            throw new RuntimeError(
+                name,
+                "Cannot access uninitialized variable '" + name.lexeme + "'."
+            );
         }
 
         if (enclosing != null) return enclosing.get(name);

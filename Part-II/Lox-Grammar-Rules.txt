@@ -6,13 +6,16 @@ declaration -> varDecl | statement ;
 
 varDecl     -> "var" IDENTIFIER ( "=" expression )? ";" ;
 
-statement   -> exprStmt | printStmt | block ;
-
-block       -> "{" declaration "}" ;
+statement   -> exprStmt | printStmt | ifStmt | block ;
 
 exprStmt    -> expression ";" ;
 
 printStmt   -> "print" expression ";" ;
+
+ifStmt      -> "if" "(" expression ")" statement
+               ( "else" statement )? ;
+
+block       -> "{" declaration "}" ;
 
 
 

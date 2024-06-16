@@ -46,7 +46,7 @@ public class Lox {
             String line = reader.readLine();
             if (line == null) break;
 
-            // If expr, evaluate it and print to screen. If stmt, execute it.
+            // If expr, evaluate it and display result value. If stmt, execute it.
             if (line.endsWith(";")) {
                 runStmt(line);
             } else {
@@ -68,6 +68,7 @@ public class Lox {
         interpreter.interpretStmt(statements);
     }
 
+    // Allows for running expressions alone in the REPL.
     private static void runExpr(String source) {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();

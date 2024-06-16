@@ -106,7 +106,7 @@ class Scanner {
                 break;
             case '/':
                 if (match('/')) {
-                    while (peek() != '/' && !isAtEnd()) advance();
+                    while (peek() != '\n' && !isAtEnd()) advance();
                 } else if (match('*')) {
                     comment();
                 } else {

@@ -1,5 +1,7 @@
 package com.lox;
 
+import java.util.List;
+
 class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
 
     String print(Expr expr) {
@@ -71,6 +73,15 @@ class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     @Override
+    public String visitIfStmt(Stmt.If stmt) {
+        if (stmt.elseBranch == null) {
+            return parenthesize2("if", stmt.condition, stmt.thenBranch);
+        }
+
+        return parenthesize2("if-else", stmt.condition, stmt.elseBranch);
+    }
+
+    @Override
     public String visitPrintStmt(Stmt.Print stmt) {
         return parenthesize("print", stmt.expression);
     }
@@ -92,5 +103,32 @@ class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
         builder.append(")");
 
         return builder.toString();
+    }
+
+    public String parenthesize2(String name, Object... parts) {
+        StringBuilder builder = new StringBuilder();
+
+        builder.append("(").append(name);
+        transform(builder, parts);
+        builder.append(")");
+
+        return builder.toString();
+    }
+
+    private void transform(StringBuilder builder, Object... parts) {
+        for (Object part : parts) {
+            builder.append(" ");
+            if (part instanceof Expr) {
+                builder.append(((Expr) part).accept(this));
+            } else if (part instanceof Stmt) {
+                builder.append(((Stmt) part).accept(this));
+            } else if (part instanceof Token) {
+                builder.append(((Token) part).lexeme);
+            } else if (part instanceof List) {
+                transform(builder, ((List) part).toArray());
+            } else {
+                builder.append(part);
+            }
+        }
     }
 }

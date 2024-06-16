@@ -29,6 +29,7 @@ class Parser {
         return statements;
     }
 
+    // For running expressions in the REPL.
     Expr parseExpr() {
         try {
             return expression();
@@ -63,10 +64,27 @@ class Parser {
 
     // statement -> printStmt | exprStmt | block ;
     private Stmt statement() {
+        if (match(IF)) return ifStatement();
         if (match(PRINT)) return printStatement();
         if (match(LEFT_BRACE)) return new Stmt.Block(block());
 
         return expressionStatement();
+    }
+
+    // ifStmt -> "if" "(" expression ")" statement
+    //            ( "else" statement )? ;
+    private Stmt ifStatement() {
+        consume(LEFT_PAREN, "Expect '(' after 'if'.");
+        Expr condition = expression();
+        consume(RIGHT_PAREN, "Expect ')' after expression.");
+
+        Stmt thenBranch = statement();
+        Stmt elseBranch = null;
+        if (match(ELSE)) {
+            elseBranch = statement();
+        }
+
+        return new Stmt.If(condition, thenBranch, elseBranch);
     }
 
     // printStmt -> "print" expression ";" ;
