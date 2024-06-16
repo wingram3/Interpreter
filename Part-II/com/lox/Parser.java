@@ -20,7 +20,7 @@ class Parser {
         this.tokens = tokens;
     }
 
-    List<Stmt> parse() {
+    List<Stmt> parseStmt() {
         List<Stmt> statements = new ArrayList<>();
         while (!isAtEnd()) {
             statements.add(declaration());
@@ -29,7 +29,15 @@ class Parser {
         return statements;
     }
 
-    // expression  -> assignment ( "," assignment )* ;
+    Expr parseExpr() {
+        try {
+            return expression();
+        } catch (ParseError error) {
+            return null;
+        }
+    }
+
+    // expression -> assignment ( "," assignment )* ;
     private Expr expression() {
         Expr expr = assignment();
 

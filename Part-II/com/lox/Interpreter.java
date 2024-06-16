@@ -11,12 +11,21 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     private Environment environment = new Environment();
 
-    void interpret(List<Stmt> statements) {
+    void interpretStmt(List<Stmt> statements) {
         try {
             for (Stmt statement : statements) {
-                //execute(statement);
-                System.out.println(new AstPrinter().print(statement));
+                execute(statement);
+                // System.out.println(new AstPrinter().print(statement));
             }
+        } catch (RuntimeError error) {
+            Lox.runtimeError(error);
+        }
+    }
+
+    void interpretExpr(Expr expression) {
+        try {
+            Object value = evaluate(expression);
+            System.out.println(stringify(value));
         } catch (RuntimeError error) {
             Lox.runtimeError(error);
         }

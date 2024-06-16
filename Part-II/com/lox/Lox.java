@@ -29,7 +29,7 @@ public class Lox {
     // Read in a file and run it.
     private static void runFile(String path) throws IOException {
         byte[] bytes = Files.readAllBytes(Paths.get(path));
-        run(new String(bytes, Charset.defaultCharset()));
+        runStmt(new String(bytes, Charset.defaultCharset()));
 
         // Indicate an error in the exit code.
         if (hadError) System.exit(65);
@@ -45,21 +45,38 @@ public class Lox {
             System.out.print("> ");
             String line = reader.readLine();
             if (line == null) break;
-            run(line);
+
+            // If expr, evaluate it and print to screen. If stmt, execute it.
+            if (line.endsWith(";")) {
+                runStmt(line);
+            } else {
+                runExpr(line);
+            }
+
             hadError = false;
         }
     }
 
-    private static void run(String source) {
+    private static void runStmt(String source) {
         Scanner scanner = new Scanner(source);
         List<Token> tokens = scanner.scanTokens();
         Parser parser = new Parser(tokens);
-        List<Stmt> statements = parser.parse();
+        List<Stmt> statements = parser.parseStmt();
 
-        // Stop if there was a syntax error.
         if (hadError) return;
 
-        interpreter.interpret(statements);
+        interpreter.interpretStmt(statements);
+    }
+
+    private static void runExpr(String source) {
+        Scanner scanner = new Scanner(source);
+        List<Token> tokens = scanner.scanTokens();
+        Parser parser = new Parser(tokens);
+        Expr expression = parser.parseExpr();
+
+        if (hadError) return;
+
+        interpreter.interpretExpr(expression);
     }
 
     // tells the user a syntax error occurred on a given line.
