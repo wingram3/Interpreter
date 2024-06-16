@@ -52,6 +52,20 @@ class AstPrinter implements Expr.Visitor<String>, Stmt.Visitor<String> {
     }
 
     @Override
+    public String visitBlockStmt(Stmt.Block stmt) {
+        StringBuilder stmtBuilder = new StringBuilder();
+
+        stmtBuilder.append("(block");
+        for (Stmt statement : stmt.statements) {
+            stmtBuilder.append(" ");
+            stmtBuilder.append(print(statement));
+        }
+        stmtBuilder.append(")");
+
+        return stmtBuilder.toString();
+    }
+
+    @Override
     public String visitExpressionStmt(Stmt.Expression stmt) {
         return parenthesize(";", stmt.expression);
     }

@@ -14,8 +14,8 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     void interpret(List<Stmt> statements) {
         try {
             for (Stmt statement : statements) {
-                execute(statement);
-                // System.out.println(new AstPrinter().print(statement));
+                //execute(statement);
+                System.out.println(new AstPrinter().print(statement));
             }
         } catch (RuntimeError error) {
             Lox.runtimeError(error);
@@ -133,6 +133,28 @@ class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     // Statement analogue to evaluate().
     private void execute(Stmt stmt) {
         stmt.accept(this);
+    }
+
+    // executes a list of statements in the context of a given environment.
+    void executeBlock(List<Stmt> statements, Environment environment) {
+        Environment previous = this.environment;
+
+        try {
+            this.environment = environment;
+
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
+        } finally {
+            this.environment = previous;
+        }
+    }
+
+    // Create an environment for a block's scope and pass it to executeBlock().
+    @Override
+    public Void visitBlockStmt(Stmt.Block stmt) {
+        executeBlock(stmt.statements, new Environment(environment));
+        return null;
     }
 
     // Evaluate the inner expression and discard the value.
