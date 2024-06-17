@@ -3,6 +3,7 @@ package com.lox;
 import static com.lox.TokenType.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -62,13 +63,59 @@ class Parser {
         }
     }
 
-    // statement -> printStmt | exprStmt | block ;
+    // statement -> exprStmt | forStmt | ifStmt | printStmt | whileStmt | block ;
     private Stmt statement() {
+        if (match(FOR)) return forStatement();
         if (match(IF)) return ifStatement();
         if (match(PRINT)) return printStatement();
+        if (match(WHILE)) return whileStatement();
         if (match(LEFT_BRACE)) return new Stmt.Block(block());
 
         return expressionStatement();
+    }
+
+    // forStmt     -> "for" "(" ( varDecl | exprStmt | ";" )
+    //                expression? ";"
+    //                expression? ")" statement ;
+    private Stmt forStatement() {
+        consume(LEFT_PAREN, "Expect '(' after 'for'.");
+
+        Stmt initializer;
+        if (match(SEMICOLON)) {
+            initializer = null;
+        } else if (match(VAR)) {
+            initializer = varDeclaration();
+        } else {
+            initializer = expressionStatement();
+        }
+
+        Expr condition = null;
+        if (!check(SEMICOLON)) {
+            condition = expression();
+        }
+        consume(SEMICOLON, "Expect ';' after loop condition.");
+
+        Expr increment = null;
+        if (!check(RIGHT_PAREN)) {
+            increment = expression();
+        }
+        consume(RIGHT_PAREN, "Expect ')' after for clauses.");
+        Stmt body = statement();
+
+        if (increment != null) {
+            body = new Stmt.Block(
+                Arrays.asList(body, new Stmt.Expression(increment))
+            );
+        }
+
+        if (condition == null) condition = new Expr.Literal(true);
+        body = new Stmt.While(condition, body);
+
+        if (initializer != null) {
+            body = new Stmt.Block(Arrays.asList(initializer, body));
+        }
+
+        return body;
     }
 
     // ifStmt -> "if" "(" expression ")" statement
@@ -105,6 +152,16 @@ class Parser {
 
         consume(SEMICOLON, "Expect ';' after variable declaration.");
         return new Stmt.Var(name, initializer);
+    }
+
+    // whileStmt -> "while" "(" expression ")" statement ;
+    private Stmt whileStatement() {
+        consume(LEFT_PAREN, "Expect '(' after 'while'.");
+        Expr condition = expression();
+        consume(RIGHT_PAREN, "Expect ') after condition.");
+        Stmt body = statement();
+
+        return new Stmt.While(condition, body);
     }
 
     // exprStmt -> expression ";" ;
@@ -146,9 +203,9 @@ class Parser {
         return expr;
     }
 
-    // ternary -> equality ( "?" expression ":" expression )? ;
+    // ternary -> logic_or ( "?" expression ":" expression )? ;
     private Expr ternary() {
-        Expr condition = equality();
+        Expr condition = or();
 
         if (match(QMARK)) {
             Token operator1 = previous();
@@ -168,6 +225,32 @@ class Parser {
             );
         }
         return condition;
+    }
+
+    // logic_or -> logic_and ( "or" logic_and )* ;
+    private Expr or() {
+        Expr expr = and();
+
+        while (match(OR)) {
+            Token operator = previous();
+            Expr right = and();
+            expr = new Expr.Logical(expr, operator, right);
+        }
+
+        return expr;
+    }
+
+    // logic_and -> equality ( "and" equality )* ;
+    private Expr and() {
+        Expr expr = equality();
+
+        while (match(AND)) {
+            Token operator = previous();
+            Expr right = equality();
+            expr = new Expr.Logical(expr, operator, right);
+        }
+
+        return expr;
     }
 
     // equality -> comparison ( ( "!=" | "==" ) comparison )* ;
