@@ -21,4 +21,4 @@ run: all
 
 # Clean up generated class files
 clean:
-	rm -f com/lox/*.class com/tool/*.class test.txt
+	rm -f com/lox/*.class com/tool/*.class

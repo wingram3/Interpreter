@@ -215,7 +215,7 @@ class Scanner {
     }
 
     private boolean isAlpha(char c) {
-        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'A') || c == '_';
+        return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
     }
 
     private boolean isAlphaNumeric(char c) {
@@ -231,8 +231,7 @@ class Scanner {
     }
 
     private char advance() {
-        current++;
-        return source.charAt(current - 1);
+        return source.charAt(current++);
     }
 
     private void addToken(TokenType type) {

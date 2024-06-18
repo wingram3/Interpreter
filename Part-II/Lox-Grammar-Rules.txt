@@ -35,7 +35,7 @@ block       -> "{" declaration "}" ;
 
 EXPRESSIONS:
 ------------
-expression  -> assignment ( "," assignment )* ;
+expression  -> assignment ;
 
 assignment  -> IDENTIFIER "=" assignment
                | ternary ;

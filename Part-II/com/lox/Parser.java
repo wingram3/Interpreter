@@ -39,15 +39,9 @@ class Parser {
         }
     }
 
-    // expression -> assignment ( "," assignment )* ;
+    // expression -> assignment ;
     private Expr expression() {
         Expr expr = assignment();
-
-        while (match(COMMA)) {
-            Token operator = previous();
-            Expr right = assignment();
-            expr = new Expr.Binary(expr, operator, right);
-        }
 
         return expr;
     }
@@ -71,7 +65,6 @@ class Parser {
         if (match(PRINT)) return printStatement();
         if (match(WHILE)) return whileStatement();
         if (match(LEFT_BRACE)) return new Stmt.Block(block());
-
         return expressionStatement();
     }
 
@@ -182,7 +175,7 @@ class Parser {
                 if (parameters.size() >= 255) {
                     error(peek(), "Can't have more than 255 parameters.");
                 }
-                parameters.add(consume(IDENTIFIER, "Expect paramters name."));
+                parameters.add(consume(IDENTIFIER, "Expect parameter name."));
             } while (match(COMMA));
         }
         consume(RIGHT_PAREN, "Expect ')' after parameters.");
