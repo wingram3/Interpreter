@@ -39,7 +39,7 @@ EXPRESSIONS:
 ------------
 expression  -> assignment ( "," expression )* ;
 
-assignment  -> IDENTIFIER "=" assignment
+assignment  -> IDENTIFIER ( "=" | "+=" | "-=" | "*=" | "/=" ) assignment
                | ternary ;
 
 ternary     -> logic_or ( "?" expression ":" expression )? ;

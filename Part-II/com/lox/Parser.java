@@ -215,23 +215,54 @@ class Parser {
         return statements;
     }
 
-    // assignment  -> IDENTIFIER "=" assignment
+    // assignment  -> IDENTIFIER ( "=" | "+=" | "-=" | "*=" | "/=" ) assignment
     //                | ternary ;
     private Expr assignment() {
         Expr expr = equality();
 
-        if (match(EQUAL)) {
-            Token equals = previous();
+        if (match(EQUAL, PLUS_EQUAL, MINUS_EQUAL, STAR_EQUAL, SLASH_EQUAL)) {
+            Token operator = previous();
             Expr value = assignment();
 
             if (expr instanceof Expr.Variable) {
                 Token name = ((Expr.Variable) expr).name;
+
+                switch (operator.type) {
+                    case EQUAL:
+                        break;
+                    case PLUS_EQUAL:
+                        value = new Expr.Binary(
+                            new Expr.Variable(name),
+                            new Token(PLUS, "+", null, operator.line),
+                            value
+                        );
+                        break;
+                    case MINUS_EQUAL:
+                        value = new Expr.Binary(
+                            new Expr.Variable(name),
+                            new Token(MINUS, "-", null, operator.line),
+                            value
+                        );
+                        break;
+                    case STAR_EQUAL:
+                        value = new Expr.Binary(
+                            new Expr.Variable(name),
+                            new Token(STAR, "*", null, operator.line),
+                            value
+                        );
+                        break;
+                    case SLASH_EQUAL:
+                        value = new Expr.Binary(
+                            new Expr.Variable(name),
+                            new Token(SLASH, "/", null, operator.line),
+                            value
+                        );
+                        break;
+                }
                 return new Expr.Assign(name, value);
             }
-
-            error(equals, "Invalid assignment target.");
+            error(operator, "Invalid assignment target.");
         }
-
         return expr;
     }
 

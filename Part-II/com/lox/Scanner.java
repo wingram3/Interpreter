@@ -74,23 +74,23 @@ class Scanner {
             case '.':
                 addToken(DOT);
                 break;
-            case '-':
-                addToken(MINUS);
-                break;
-            case '+':
-                addToken(PLUS);
-                break;
             case ';':
                 addToken(SEMICOLON);
-                break;
-            case '*':
-                addToken(STAR);
                 break;
             case '?':
                 addToken(QMARK);
                 break;
             case ':':
                 addToken(COLON);
+                break;
+            case '+':
+                addToken(match('=') ? PLUS_EQUAL : PLUS);
+                break;
+            case '-':
+                addToken(match('=') ? MINUS_EQUAL : MINUS);
+                break;
+            case '*':
+                addToken(match('=') ? STAR_EQUAL : STAR);
                 break;
             case '!':
                 addToken(match('=') ? BANG_EQUAL : BANG);
@@ -109,6 +109,8 @@ class Scanner {
                     while (peek() != '\n' && !isAtEnd()) advance();
                 } else if (match('*')) {
                     comment();
+                } else if (match('=')) {
+                    addToken(SLASH_EQUAL);
                 } else {
                     addToken(SLASH);
                 }
