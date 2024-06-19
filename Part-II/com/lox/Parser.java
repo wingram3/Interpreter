@@ -39,14 +39,20 @@ class Parser {
         }
     }
 
-    // expression -> assignment ;
+    // expression -> assignment ( "," expression )* ;
     private Expr expression() {
         Expr expr = assignment();
+
+        if (match(COMMA)) {
+            Token operator = previous();
+            Expr right = expression();
+            expr = new Expr.Binary(expr, operator, right);
+        }
 
         return expr;
     }
 
-    // declaration -> varDecl | statement ;
+    // declaration -> funDecl | varDecl | statement ;
     private Stmt declaration() {
         try {
             if (match(FUN)) return function("function");
@@ -58,11 +64,12 @@ class Parser {
         }
     }
 
-    // statement -> exprStmt | forStmt | ifStmt | printStmt | whileStmt | block ;
+    // statement -> exprStmt | forStmt | ifStmt | printStmt | returnStmt | whileStmt | block ;
     private Stmt statement() {
         if (match(FOR)) return forStatement();
         if (match(IF)) return ifStatement();
         if (match(PRINT)) return printStatement();
+        if (match(RETURN)) return returnStatement();
         if (match(WHILE)) return whileStatement();
         if (match(LEFT_BRACE)) return new Stmt.Block(block());
         return expressionStatement();
@@ -146,6 +153,18 @@ class Parser {
 
         consume(SEMICOLON, "Expect ';' after variable declaration.");
         return new Stmt.Var(name, initializer);
+    }
+
+    // returnStmt -> "return" expression? ";" ;
+    private Stmt returnStatement() {
+        Token keyword = previous();
+        Expr value = null;
+        if (!check(SEMICOLON)) {
+            value = expression();
+        }
+
+        consume(SEMICOLON, "Expect ';' after return value.");
+        return new Stmt.Return(keyword, value);
     }
 
     // whileStmt -> "while" "(" expression ")" statement ;
