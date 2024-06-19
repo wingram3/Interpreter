@@ -218,7 +218,7 @@ class Parser {
     // assignment  -> IDENTIFIER ( "=" | "+=" | "-=" | "*=" | "/=" ) assignment
     //                | ternary ;
     private Expr assignment() {
-        Expr expr = equality();
+        Expr expr = ternary();
 
         if (match(EQUAL, PLUS_EQUAL, MINUS_EQUAL, STAR_EQUAL, SLASH_EQUAL)) {
             Token operator = previous();
