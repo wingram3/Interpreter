@@ -7,6 +7,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Given a source text, produces a series of tokens.
+ */
 class Scanner {
 
     private static final Map<String, TokenType> keywords;
