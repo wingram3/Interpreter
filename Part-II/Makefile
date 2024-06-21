@@ -19,6 +19,11 @@ $(CLASSES): $(SOURCES)
 run: all
 	java -cp . com.lox.Lox
 
+# Generate AST classes (Stmt.java & Expr.java)
+ast:
+	javac com/tool/GenerateAst.java
+	java com.tool.GenerateAst com/lox
+
 # Clean up generated class files
 clean:
 	rm -f com/lox/*.class com/tool/*.class
