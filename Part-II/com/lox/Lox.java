@@ -82,6 +82,7 @@ public class Lox {
 
         if (hadError) return;
 
+        // REPL entries are not resolved.
         interpreter.interpretExpr(expression);
     }
 

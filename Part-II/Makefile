@@ -3,7 +3,7 @@ JAVAC = javac
 JFLAGS = -g
 
 # Define the source files
-SOURCES = com/lox/*.java com/tool/*.java
+SOURCES = com/lox/*.java
 
 # Define the class files (object files)
 CLASSES = $(SOURCES:.java=.class)
