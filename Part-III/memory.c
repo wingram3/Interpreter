@@ -1,5 +1,8 @@
 #include <stdlib.h>
 
+#include "memory.h"
+
+/* reallocate: clox dynamic memory management function. */
 void *reallocate(void *pointer, size_t old_size, size_t new_size) {
     if (new_size == 0) {
         free(pointer);

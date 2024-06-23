@@ -1,16 +1,18 @@
-#ifndef clox_common_h
-#define clox_common_h
+#ifndef clox_chunk_h
+#define clox_chunk_h
 
 #include "common.h"
 
+/* One-byte op-code structure. */
 typedef enum {
     OP_RETURN,
 } OpCode;
 
+/* Dynamic array structure to hold sequences of bytecode. */
 typedef struct {
-    int count;
-    int capacity;
-    uint8_t *code;
+    int count;      // number of allocated entries in use.
+    int capacity;   // total number of allocated entires.
+    uint8_t *code;  // an array of bytes.
 } Chunk;
 
 void init_chunk(Chunk *chunk);
