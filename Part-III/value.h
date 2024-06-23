@@ -6,7 +6,7 @@
 /* Constant value structure. */
 typedef double Value;
 
-/* Dynamic array to hold a chunk's constant pool. */
+/* Dynamic array structure to hold a chunk's constant pool. */
 typedef struct {
     int capacity;
     int count;
