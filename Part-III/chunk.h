@@ -2,6 +2,7 @@
 #define clox_chunk_h
 
 #include "common.h"
+#include "lines.h"
 #include "value.h"
 
 /* One-byte opcode structure. */
@@ -15,7 +16,7 @@ typedef struct {
     int count;              // number of allocated entries in use.
     int capacity;           // total number of allocated entires.
     uint8_t *code;          // an array of bytes.
-    int *lines;             // line numbers, parellels the code array.
+    LineNumberArray lines;  // line numbers.
     ValueArray constants;   // constants associated w/ the chunk.
 } Chunk;
 
