@@ -28,6 +28,8 @@ int disassemble_instruction(Chunk *chunk, int offset)
             return simple_instruction("OP_RETURN", offset);
         case OP_CONSTANT:
             return constant_instruction("OP_CONSTANT", chunk, offset);
+        case OP_CONSTANT_LONG:
+            return constant_long_instruction("OP_CONSTANT_LONG", chunk, offset);
         default:
             printf("Unknown opcode %d\n", instruction);
             return offset + 1;
@@ -49,6 +51,18 @@ static int constant_instruction(const char *name, Chunk *chunk, int offset)
     print_value(chunk->constants.values[constant]);
     printf("'\n");
     return offset + 2;
+}
+
+/* constant_long_instruction: display the opcode at an offset w/ its constant value. */
+static int constant_long_instruction(const char *name, Chunk *chunk, int offset)
+{
+    uint32_t constant = chunk->code[offset + 1] |
+                        (chunk->code[offset + 2] << 8) |
+                        (chunk->code[offset + 3] << 16);
+    printf("%-16s %4d '", name, constant);
+    print_value(chunk->constants.values[constant]);
+    printf("'\n");
+    return offset + 4;
 }
 
 /* get_line: get the source line number from a given bytecode offset. */
