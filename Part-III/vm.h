@@ -2,11 +2,16 @@
 #define clox_vm_h
 
 #include "chunk.h"
+#include "value.h"
+
+#define STACK_MAX 256
 
 /* Virtual machine structure. */
 typedef struct {
-    Chunk *chunk;   // The chunk that the vm executes.
-    uint8_t *ip;    // Instruction pointer.
+    Chunk *chunk;           // The chunk that the vm executes.
+    uint8_t *ip;            // Instruction pointer.
+    Value stack[STACK_MAX];
+    Value *stack_top;       // Stack pointer.
 } VM;
 
 /* Enum to hold exit code values. */
@@ -20,5 +25,7 @@ void init_vm();
 void free_vm();
 InterpretResult interpret(Chunk *chunk);
 static InterpretResult run();
+void push(Value value);
+Value pop();
 
 #endif
