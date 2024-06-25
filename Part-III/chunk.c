@@ -43,17 +43,16 @@ void write_chunk(Chunk *chunk, uint8_t byte, int line)
 void write_constant(Chunk *chunk, Value value, int line)
 {
     int constant_index = add_constant(chunk, value);
-    if (value <= 0xFF) {
+    if (value <= 0xFF) {                                                    // check if 'value' fits within a single byte.
         write_chunk(chunk, OP_CONSTANT, line);
         write_chunk(chunk, (uint8_t)constant_index, line);
-    } else {
+    } else {                                                                // if not, write it as a 24-bit number.
         write_chunk(chunk, OP_CONSTANT_LONG, line);
         write_chunk(chunk, (uint8_t)(constant_index & 0xFF), line);         // low byte.
         write_chunk(chunk, (uint8_t)((constant_index >> 8) & 0xFF), line);  // middle byte
         write_chunk(chunk, (uint8_t)((constant_index >> 16) & 0xFF), line); // high byte.
     }
 }
-
 
 /* add_constant: add a new constant to a chunk's constant pool. */
 int add_constant(Chunk *chunk, Value value)

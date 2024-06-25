@@ -9,7 +9,7 @@ typedef struct {
     int line_number;
 } LineNumberEntry;
 
-/* Dynamic array to hold line number entries. */
+/* Dynamic array structure to hold line number entries. */
 typedef struct {
     int capacity;
     int count;

@@ -28,6 +28,7 @@ static InterpretResult run()
 #define READ_CONSTANT_LONG() \
     (vm.chunk->constants.values[(READ_BYTE() | (READ_BYTE() << 8) | (READ_BYTE() << 16))])
 
+    // Instruction decoding.
     for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
         disassemble_instruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
@@ -55,5 +56,4 @@ static InterpretResult run()
 #undef READ_BYTE
 #undef READ_CONSTANT
 #undef READ_CONSTANT_LONG
-#undef READ_LONG
 }

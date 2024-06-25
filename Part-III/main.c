@@ -14,10 +14,12 @@ int main(int argc, char *argv[])
     write_constant(&chunk, 1.2, 123);
     write_constant(&chunk, 100000.4, 123);
     write_constant(&chunk, 0.3, 123);
-
     write_chunk(&chunk, OP_RETURN, 123);
+
     interpret(&chunk);
+
     free_vm();
     free_chunk(&chunk);
+
     return 0;
 }

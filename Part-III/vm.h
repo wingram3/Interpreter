@@ -3,11 +3,13 @@
 
 #include "chunk.h"
 
+/* Virtual machine structure. */
 typedef struct {
-    Chunk *chunk;
-    uint8_t *ip;
+    Chunk *chunk;   // The chunk that the vm executes.
+    uint8_t *ip;    // Instruction pointer.
 } VM;
 
+/* Enum to hold exit code values. */
 typedef enum {
     INTERPRET_OK,
     INTERPRET_COMPILE_ERROR,

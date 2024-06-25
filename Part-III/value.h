@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-/* Constant value structure. */
+/* Constant value type. */
 typedef double Value;
 
 /* Dynamic array structure to hold a chunk's constant pool. */

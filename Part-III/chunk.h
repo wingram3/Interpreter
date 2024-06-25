@@ -5,7 +5,7 @@
 #include "lines.h"
 #include "value.h"
 
-/* One-byte opcode structure. */
+/* One-byte opcode enum. */
 typedef enum {
     OP_CONSTANT,
     OP_CONSTANT_LONG,
