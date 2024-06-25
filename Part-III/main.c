@@ -9,9 +9,12 @@ int main(int argc, char *argv[])
     Chunk chunk;
     init_chunk(&chunk);
 
-    for (int i = 0; i < 500; i += 20) {
-        write_constant(&chunk, i, 123);
-    }
+    for (int i = 0; i < 256; i++)
+        write_constant(&chunk, 10, 123);
+
+    write_constant(&chunk, 10, 123);
+    write_constant(&chunk, 10, 123);
+
     write_chunk(&chunk, OP_RETURN, 123);
 
     interpret(&chunk);

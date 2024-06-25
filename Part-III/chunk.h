@@ -17,7 +17,7 @@ typedef struct {
     int count;              // number of allocated entries in use.
     int capacity;           // total number of allocated entires.
     uint8_t *code;          // an array of bytes.
-    LineNumberArray lines;  // line numbers.
+    LineNumberArray lines;  // line numbers - mappings of bytecode offsets to source code line numbers.
     ValueArray constants;   // constants associated w/ the chunk.
 } Chunk;
 

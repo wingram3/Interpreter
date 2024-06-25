@@ -13,7 +13,7 @@ typedef struct {
 typedef struct {
     int capacity;
     int count;
-    LineNumberEntry *line_numbers;
+    LineNumberEntry *line_number_entries;
 } LineNumberArray;
 
 void init_line_number_array(LineNumberArray *array);

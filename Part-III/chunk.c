@@ -43,14 +43,14 @@ void write_chunk(Chunk *chunk, uint8_t byte, int line)
 void write_constant(Chunk *chunk, Value value, int line)
 {
     int constant_index = add_constant(chunk, value);
-    if (value <= 0xFF) {                                                    // check if 'value' fits within a single byte.
+    if (constant_index <= 0xFF) {                              // check if the constant's index fits within a single byte.
         write_chunk(chunk, OP_CONSTANT, line);
         write_chunk(chunk, (uint8_t)constant_index, line);
-    } else {                                                                // if not, write it as a 24-bit number.
+    } else {                                                   // if not, write the index as a 24-bit number.
         write_chunk(chunk, OP_CONSTANT_LONG, line);
-        write_chunk(chunk, (uint8_t)(constant_index & 0xFF), line);         // low byte.
-        write_chunk(chunk, (uint8_t)((constant_index >> 8) & 0xFF), line);  // middle byte
-        write_chunk(chunk, (uint8_t)((constant_index >> 16) & 0xFF), line); // high byte.
+        write_chunk(chunk, (uint8_t)(constant_index & 0xFF), line);         // low byte of the index.
+        write_chunk(chunk, (uint8_t)(constant_index >> 8) & 0xFF, line);    // middle byte of the index.
+        write_chunk(chunk, (uint8_t)(constant_index >> 16) & 0xFF, line);   // high byte of the index
     }
 }
 
@@ -65,7 +65,7 @@ int add_constant(Chunk *chunk, Value value)
    if the thing being written is on a new line. */
 void add_line(Chunk *chunk, int line)
 {
-    if (chunk->lines.count == 0 || chunk->lines.line_numbers[chunk->lines.count - 1].line_number != line) {
+    if (chunk->lines.count == 0 || chunk->lines.line_number_entries[chunk->lines.count - 1].line_number != line) {
         LineNumberEntry entry;
         entry.bytecode_offset = chunk->count - 1;
         entry.line_number = line;

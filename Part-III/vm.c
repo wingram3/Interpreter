@@ -48,9 +48,11 @@ InterpretResult interpret(Chunk *chunk)
 static InterpretResult run()
 {
 #define READ_BYTE() (*vm.ip++)
+#define READ_LONG() \
+    (READ_BYTE() | (READ_BYTE() << 8) | (READ_BYTE() << 16))
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
 #define READ_CONSTANT_LONG() \
-    (vm.chunk->constants.values[(READ_BYTE() | (READ_BYTE() << 8) | (READ_BYTE() << 16))])
+    (vm.chunk->constants.values[READ_LONG()])
 
     // Instruction decoding.
     for (;;) {

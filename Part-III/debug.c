@@ -69,8 +69,8 @@ static int constant_long_instruction(const char *name, Chunk *chunk, int offset)
 int get_line(LineNumberArray *lines, int offset)
 {
     for (int i = lines->count - 1; i >= 0; i--) {
-        if (lines->line_numbers[i].bytecode_offset <= offset)
-            return lines->line_numbers[i].line_number;
+        if (lines->line_number_entries[i].bytecode_offset <= offset)
+            return lines->line_number_entries[i].line_number;
     }
     return -1;
 }
