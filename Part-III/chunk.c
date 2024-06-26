@@ -50,7 +50,7 @@ void write_constant(Chunk *chunk, Value value, int line)
         write_chunk(chunk, OP_CONSTANT_LONG, line);
         write_chunk(chunk, (uint8_t)(constant_index & 0xFF), line);         // low byte of the index.
         write_chunk(chunk, (uint8_t)(constant_index >> 8) & 0xFF, line);    // middle byte of the index.
-        write_chunk(chunk, (uint8_t)(constant_index >> 16) & 0xFF, line);   // high byte of the index
+        write_chunk(chunk, (uint8_t)(constant_index >> 16) & 0xFF, line);   // high byte of the index.
     }
 }
 

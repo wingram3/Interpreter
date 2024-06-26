@@ -4,14 +4,15 @@
 #include "chunk.h"
 #include "value.h"
 
-#define STACK_MAX 256
+#define INITIAL_STACK_MAX 256
 
 /* Virtual machine structure. */
 typedef struct {
     Chunk *chunk;           // The chunk that the vm executes.
     uint8_t *ip;            // Instruction pointer.
-    Value stack[STACK_MAX];
-    Value *stack_top;       // Stack pointer.
+    Value *stack;           // Dynamic stack array.
+    Value *stack_top;       // Points just beyond the last element in the stack.
+    int stack_capacity;     // Max capacity of the stack - dynamically changes as needed.
 } VM;
 
 /* Enum to hold exit code values. */
