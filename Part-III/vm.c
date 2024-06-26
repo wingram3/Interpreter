@@ -63,11 +63,12 @@ static InterpretResult run()
 #define READ_LONG() (READ_BYTE() | (READ_BYTE() << 8) | (READ_BYTE() << 16))
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
 #define READ_CONSTANT_LONG() (vm.chunk->constants.values[READ_LONG()])
-#define BINARY_OP(op)     \
-    do {                  \
-        double b = pop(); \
-        double a = pop(); \
-        push(a op b);     \
+
+/* BINARY_OP MACRO: avoids pushing and popping from stack to make operations more efficient. */
+#define BINARY_OP(op)                            \
+    do {                                         \
+        vm.stack_top--;                          \
+        *(vm.stack_top - 1) op##= *vm.stack_top; \
     } while (false)
 
     // Instruction decoding.
