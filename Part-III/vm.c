@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "common.h"
+#include "compiler.h"
 #include "memory.h"
 #include "debug.h"
 #include "value.h"
@@ -49,23 +50,26 @@ Value pop()
 }
 
 /* interpret: interpret a chunk of bytecode. */
-InterpretResult interpret(Chunk *chunk)
+InterpretResult interpret(const char *source)
 {
-    vm.chunk = chunk;
-    vm.ip = vm.chunk->code;
-    return run();
+    compile(source);
+    return INTERPRET_OK;
 }
 
 /* run: the VM's beating heart. */
 static InterpretResult run()
 {
+
+/* READ_BYTE MACRO: Reads one byte as an index into the constant pool. */
 #define READ_BYTE() (*vm.ip++)
+
+/* READ_LONG MACRO: Reads three bytes as a 24-bit index into the constant pool. */
 #define READ_LONG() (READ_BYTE() | (READ_BYTE() << 8) | (READ_BYTE() << 16))
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
 #define READ_CONSTANT_LONG() (vm.chunk->constants.values[READ_LONG()])
 
-/* BINARY_OP MACRO: avoids pushing and popping from stack to make operations more efficient. */
-#define BINARY_OP(op)                            \
+/* ARITHMETIC_OP MACRO: avoids pushing and popping from stack. */
+#define ARITHMETIC_OP(op)                        \
     do {                                         \
         vm.stack_top--;                          \
         *(vm.stack_top - 1) op##= *vm.stack_top; \
@@ -96,13 +100,13 @@ static InterpretResult run()
                 push(constant);
                 break;
             }
-            case OP_ADD:      BINARY_OP(+); break;
-            case OP_SUBTRACT: BINARY_OP(-); break;
-            case OP_MULTIPLY: BINARY_OP(*); break;
-            case OP_DIVIDE:   BINARY_OP(/); break;
+            case OP_ADD:      ARITHMETIC_OP(+); break;
+            case OP_SUBTRACT: ARITHMETIC_OP(-); break;
+            case OP_MULTIPLY: ARITHMETIC_OP(*); break;
+            case OP_DIVIDE:   ARITHMETIC_OP(/); break;
             case OP_NEGATE:
-                *(vm.stack_top - 1) *= -1;  // Negate the top stack value in place - faster than 'push(-pop())'
-                break;
+                *(vm.stack_top - 1) *= -1;  // Negate the top stack value in place.
+                break;                      // Faster than 'push(-pop())'
             case OP_RETURN: {
                 print_value(pop());
                 printf("\n");
