@@ -167,7 +167,7 @@ static TokenType identifier_type()
         case 'v': return check_keyword(1, 2, "ar", TOKEN_VAR);
         case 'w': return check_keyword(1, 4, "hile", TOKEN_WHILE);
 
-        // Initial letters that correspond to >1 keywords.
+        // Initial letters that correspond to several keywords.
         case 'f':
             if (scanner.current - scanner.start > 1)
                 switch (scanner.start[1]) {
