@@ -40,7 +40,7 @@ void push(Value value)
         vm.stack_top = vm.stack + old_capacity;
     }
 
-    *(vm.stack_top++) = value;
+    *vm.stack_top++ = value;
 }
 
 /* pop: pop a Value off the stack and return it. */
@@ -82,11 +82,10 @@ static InterpretResult run()
 #define READ_CONSTANT_LONG() (vm.chunk->constants.values[READ_LONG()])
 
 /* ARITHMETIC_OP MACRO: avoids pushing and popping from stack. */
-#define ARITHMETIC_OP(op)                        \
-    do {                                         \
-        vm.stack_top--;                          \
-        *(vm.stack_top - 1) op##= *vm.stack_top; \
-    } while (false)
+#define ARITHMETIC_OP(op)                            \
+    do {                                             \
+        *(vm.stack_top - 1) op##= *(--vm.stack_top); \
+    } while (false)                                  \
 
     // Instruction decoding.
     for (;;) {
@@ -132,5 +131,5 @@ static InterpretResult run()
 #undef READ_LONG
 #undef READ_CONSTANT
 #undef READ_CONSTANT_LONG
-#undef BINARY_OP
+#undef ARITHMETIC_OP
 }

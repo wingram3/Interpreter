@@ -92,7 +92,7 @@ static Token error_token(const char *message)
     return token;
 }
 
-/* skip_comment: handles block comments similarly to a string literal. */
+/* skip_comment: handles block comments similarly to string literals. */
 static Token block_comment()
 {
     while(peek() != '*' && !is_at_end()) {
@@ -246,6 +246,7 @@ Token scan_token()
         case '.': return make_token(TOKEN_DOT);
         case '-': return make_token(TOKEN_MINUS);
         case '+': return make_token(TOKEN_PLUS);
+        case '/': return make_token(TOKEN_SLASH);
         case '*': return make_token(TOKEN_STAR);
         case '!':
             return make_token(

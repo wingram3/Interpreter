@@ -2,9 +2,14 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+#include "chunk.h"
 #include "common.h"
 #include "compiler.h"
 #include "scanner.h"
+
+#ifdef DEBUG_PRINT_CODE
+#include "debug.h"
+#endif
 
 typedef struct {
     Token current;
@@ -12,6 +17,30 @@ typedef struct {
     bool had_error;
     bool panic_mode;
 } Parser;
+
+/* Precedence levels in order of lowest to highest. */
+typedef enum {
+    PREC_NONE,
+    PREC_ASSIGNMENT,  // =
+    PREC_OR,          // or
+    PREC_AND,         // and
+    PREC_EQUALITY,    // == !=
+    PREC_COMPARISON,  // < > <= >=
+    PREC_TERM,        // + -
+    PREC_FACTOR,      // * /
+    PREC_UNARY,       // ! -
+    PREC_CALL,        // . ()
+    PREC_PRIMARY
+} Precedence;
+
+typedef void (*ParseFn)();
+
+/* Structure to represent a single row in the parser table. */
+typedef struct {
+    ParseFn prefix;
+    ParseFn infix;
+    Precedence precedence;
+} ParseRule;
 
 Parser parser;
 Chunk *compiling_chunk;
@@ -103,10 +132,152 @@ static void emit_return()
     emit_byte(OP_RETURN);
 }
 
-/* end_compiler:  */
+/* make_constant: insert an entry into the constant pool. */
+static int make_constant(Value value)
+{
+    int constant = add_constant(current_chunk(), value);
+    if (constant > 16777216) {
+        error("Too many constants in one chunk.");
+        return 0;
+    }
+
+    return constant;
+}
+
+/* emit_constant: emit a constant value. */
+static void emit_constant(Value value)
+{
+    if (make_constant(value) < 256) {
+        emit_bytes(OP_CONSTANT, (uint8_t)make_constant(value), -1);
+    } else {    // write the constant index as a 24-bit number if the index > 255.
+        emit_bytes(OP_CONSTANT_LONG, (uint8_t)make_constant(value) & 0xFF,
+            ((uint8_t)make_constant(value) >> 8) & 0xFF,
+            ((uint8_t)make_constant(value) >> 16) & 0xFF, -1);
+    }
+}
+
+/* end_compiler: emit a return opcode instruction. */
 static void end_compiler()
 {
     emit_return();
+#ifdef DEBUG_PRINT_CODE
+    if (!parser.hadError)
+        disassemble_chunk(current_chunk(), "code");
+#endif
+}
+
+static void expression();
+static ParseRule *get_rule(TokenType type);
+static void parse_precedence(Precedence precedence);
+
+/* parse_precedence: starts at current token and parses any expr
+   at the given precedence level or higher. */
+static void parse_precedence(Precedence precedence)
+{
+    advance();
+    ParseFn prefix_rule = get_rule(parser.previous.type)->prefix;
+    if (prefix_rule == NULL) {
+        error("Expect expression.");
+        return;
+    }
+
+    prefix_rule();
+
+    while (precedence <= get_rule(parser.current.type)->precedence) {
+        advance();
+        ParseFn infix_rule = get_rule(parser.previous.type)->infix;
+        infix_rule();
+    }
+}
+
+/* binary: function for compiling binary expressions. */
+static void binary()
+{
+    TokenType operator_type = parser.previous.type;
+    ParseRule *rule = get_rule(operator_type);
+    parse_precedence((Precedence)(rule->precedence + 1));
+
+    switch (operator_type) {
+        case TOKEN_PLUS:  emit_byte(OP_ADD); break;
+        case TOKEN_MINUS: emit_byte(OP_SUBTRACT); break;
+        case TOKEN_STAR:  emit_byte(OP_MULTIPLY); break;
+        case TOKEN_SLASH: emit_byte(OP_DIVIDE); break;
+        default:
+            return;
+    }
+}
+
+/* grouping: function for compiling grouping expressions. */
+static void grouping()
+{
+    expression();   // this inner call handles bytecode generation for the expr in parentheses.
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
+}
+
+/* number: function for compiling number literal expressions. */
+static void number()
+{
+    double value = strtod(parser.previous.start, NULL);
+    emit_constant(value);
+}
+
+/* unary: function for compiling unary expressions. */
+static void unary()
+{
+    TokenType operator_type = parser.previous.type;
+
+    parse_precedence(PREC_UNARY);   // compile the operand.
+
+    // Emit the operator expression.
+    switch (operator_type) {
+        case TOKEN_MINUS: emit_byte(OP_NEGATE); break;
+        default: return;
+    }
+}
+
+/* Table of function pointers. */
+ParseRule rules[] = {
+    [TOKEN_LEFT_PAREN]    = {grouping, NULL,   PREC_NONE},
+    [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_RIGHT_BRACE]   = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_COMMA]         = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_DOT]           = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_MINUS]         = {unary,    binary, PREC_TERM},
+    [TOKEN_PLUS]          = {NULL,     binary, PREC_TERM},
+    [TOKEN_SEMICOLON]     = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_SLASH]         = {NULL,     binary, PREC_FACTOR},
+    [TOKEN_STAR]          = {NULL,     binary, PREC_FACTOR},
+    [TOKEN_EQUAL]         = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_EQUAL_EQUAL]   = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_GREATER]       = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_GREATER_EQUAL] = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_LESS]          = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_LESS_EQUAL]    = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
+    [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_ELSE]          = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_FOR]           = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_FUN]           = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_IF]            = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_PRINT]         = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_RETURN]        = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_VAR]           = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_WHILE]         = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_ERROR]         = {NULL,     NULL,   PREC_NONE},
+    [TOKEN_EOF]           = {NULL,     NULL,   PREC_NONE},
+};
+
+/* get_rule: returns the rule at a given index. */
+static ParseRule *get_rule(TokenType type)
+{
+    return &rules[type];
+}
+
+/* expression:  */
+static void expression()
+{
+    parse_precedence(PREC_ASSIGNMENT);
 }
 
 /* compile: compile the source text. */
@@ -119,7 +290,7 @@ bool compile(const char *source, Chunk *chunk)
     parser.panic_mode = false;
 
     advance();
-    // expression();
+    expression();
     consume(TOKEN_EOF, "Expect end of expression.");
     end_compiler();
     return !parser.had_error;
