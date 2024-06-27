@@ -97,7 +97,6 @@ static InterpretResult run()
             printf(" ]");
         }
         printf("\n");
-        disassemble_instruction(vm.chunk, (int)(vm.ip - vm.chunk->code));
 #endif
 
         uint8_t instruction;
