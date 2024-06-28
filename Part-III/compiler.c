@@ -22,6 +22,7 @@ typedef struct {
 typedef enum {
     PREC_NONE,
     PREC_ASSIGNMENT,  // =
+    PREC_TERNARY,     // ?:
     PREC_OR,          // or
     PREC_AND,         // and
     PREC_EQUALITY,    // == !=
@@ -39,6 +40,7 @@ typedef void (*ParseFn)();
 typedef struct {
     ParseFn prefix;
     ParseFn infix;
+    ParseFn mixfix;
     Precedence precedence;
 } ParseRule;
 
@@ -208,6 +210,12 @@ static void binary()
     }
 }
 
+/* ternary: function for compiling ternary (conditional) expressions. */
+static void ternary()
+{
+    // implement with other jumps codes.
+}
+
 /* grouping: function for compiling grouping expressions. */
 static void grouping()
 {
@@ -237,36 +245,38 @@ static void unary()
 }
 
 /* Table of function pointers. */
-ParseRule rules[] = {
-    [TOKEN_LEFT_PAREN]    = {grouping, NULL,   PREC_NONE},
-    [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_LEFT_BRACE]    = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_RIGHT_BRACE]   = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_COMMA]         = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_DOT]           = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_MINUS]         = {unary,    binary, PREC_TERM},
-    [TOKEN_PLUS]          = {NULL,     binary, PREC_TERM},
-    [TOKEN_SEMICOLON]     = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_SLASH]         = {NULL,     binary, PREC_FACTOR},
-    [TOKEN_STAR]          = {NULL,     binary, PREC_FACTOR},
-    [TOKEN_EQUAL]         = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_EQUAL_EQUAL]   = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_GREATER]       = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_GREATER_EQUAL] = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_LESS]          = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_LESS_EQUAL]    = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_NUMBER]        = {number,   NULL,   PREC_NONE},
-    [TOKEN_CLASS]         = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_ELSE]          = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_FOR]           = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_FUN]           = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_IF]            = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_PRINT]         = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_RETURN]        = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_VAR]           = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_WHILE]         = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_ERROR]         = {NULL,     NULL,   PREC_NONE},
-    [TOKEN_EOF]           = {NULL,     NULL,   PREC_NONE},
+ParseRule rules[] = {     /* prefix    infix     mixfix  precedence */
+    [TOKEN_LEFT_PAREN]    = {grouping, NULL,     NULL,      PREC_NONE},
+    [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_LEFT_BRACE]    = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_RIGHT_BRACE]   = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_COMMA]         = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_DOT]           = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_MINUS]         = {unary,    binary,   NULL,      PREC_TERM},
+    [TOKEN_PLUS]          = {NULL,     binary,   NULL,      PREC_TERM},
+    [TOKEN_SEMICOLON]     = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_SLASH]         = {NULL,     binary,   NULL,      PREC_FACTOR},
+    [TOKEN_STAR]          = {NULL,     binary,   NULL,      PREC_FACTOR},
+    [TOKEN_EQUAL]         = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_QUESTION]      = {NULL,     NULL,     ternary,   PREC_TERNARY},
+    [TOKEN_COLON]         = {NULL,     NULL,     NULL,      PREC_TERNARY},
+    [TOKEN_EQUAL_EQUAL]   = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_GREATER]       = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_GREATER_EQUAL] = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_LESS]          = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_LESS_EQUAL]    = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_NUMBER]        = {number,   NULL,     NULL,      PREC_NONE},
+    [TOKEN_CLASS]         = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_ELSE]          = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_FOR]           = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_FUN]           = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_IF]            = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_PRINT]         = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_RETURN]        = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_VAR]           = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_WHILE]         = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_ERROR]         = {NULL,     NULL,     NULL,      PREC_NONE},
+    [TOKEN_EOF]           = {NULL,     NULL,     NULL,      PREC_NONE},
 };
 
 /* get_rule: returns the rule at a given index. */
