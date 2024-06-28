@@ -147,12 +147,13 @@ static int make_constant(Value value)
 /* emit_constant: emit a constant value. */
 static void emit_constant(Value value)
 {
-    if (make_constant(value) < 256) {
-        emit_bytes(OP_CONSTANT, (uint8_t)make_constant(value), -1);
+    int constant = make_constant(value);
+    if (constant < 256) {
+        emit_bytes(OP_CONSTANT, (uint8_t)constant, -1);
     } else {    // write the constant index as a 24-bit number if the index > 255.
-        emit_bytes(OP_CONSTANT_LONG, (uint8_t)make_constant(value) & 0xFF,
-            ((uint8_t)make_constant(value) >> 8) & 0xFF,
-            ((uint8_t)make_constant(value) >> 16) & 0xFF, -1);
+        emit_bytes(OP_CONSTANT_LONG, (uint8_t)(constant & 0xFF),
+            (uint8_t)((constant >> 8) & 0xFF),
+            (uint8_t)((constant >> 16) & 0xFF), -1);
     }
 }
 
