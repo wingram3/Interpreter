@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -16,7 +17,22 @@ static void reset_stack()
     vm.stack_top = vm.stack;
 }
 
-/* init_vm: initialize the virtual machine.  */
+/* runtime_error: reports runtime errors to the user. */
+static void runtime_error(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
+    fputs("\n", stderr);
+
+    size_t instruction = vm.ip - vm.chunk->code - 1;
+    int line = vm.chunk->lines.line_number_entries[instruction].line_number;
+    fprintf(stderr, "[line %d] in script\n", line);
+    reset_stack();
+}
+
+/* init_vm: initialize the virtual machine. */
 void init_vm()
 {
     vm.stack = (Value *)malloc(INITIAL_STACK_MAX * sizeof(Value));
@@ -47,6 +63,12 @@ void push(Value value)
 Value pop()
 {
     return *(--vm.stack_top);
+}
+
+/* peek: returns a Value from the stack but does not pop it. */
+static Value peek(int distance)
+{
+    return vm.stack_top[-1 - distance];
 }
 
 /* interpret: interpret a chunk of bytecode. */
@@ -82,10 +104,16 @@ static InterpretResult run()
 #define READ_CONSTANT_LONG() (vm.chunk->constants.values[READ_LONG()])
 
 /* ARITHMETIC_OP MACRO: avoids pushing and popping from stack. */
-#define ARITHMETIC_OP(op)                            \
-    do {                                             \
-        *(vm.stack_top - 1) op##= *(--vm.stack_top); \
-    } while (false)                                  \
+#define ARITHMETIC_OP(value_type, op)                     \
+    do {                                                  \
+        if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
+            runtime_error("Operands must be numbers.");   \
+            return INTERPRET_RUNTIME_ERROR;               \
+        }                                                 \
+        double b = AS_NUMBER(pop());                      \
+        double a = AS_NUMBER(pop());                      \
+        push(value_type(a op b));                         \
+    } while (false)
 
     // Instruction decoding.
     for (;;) {
@@ -111,13 +139,17 @@ static InterpretResult run()
                 push(constant);
                 break;
             }
-            case OP_ADD:      ARITHMETIC_OP(+); break;
-            case OP_SUBTRACT: ARITHMETIC_OP(-); break;
-            case OP_MULTIPLY: ARITHMETIC_OP(*); break;
-            case OP_DIVIDE:   ARITHMETIC_OP(/); break;
+            case OP_ADD:      ARITHMETIC_OP(NUMBER_VAL, +); break;
+            case OP_SUBTRACT: ARITHMETIC_OP(NUMBER_VAL, -); break;
+            case OP_MULTIPLY: ARITHMETIC_OP(NUMBER_VAL, *); break;
+            case OP_DIVIDE:   ARITHMETIC_OP(NUMBER_VAL, /); break;
             case OP_NEGATE:
-                *(vm.stack_top - 1) *= -1;  // Negate the top stack value in place.
-                break;                      // Faster than 'push(-pop())'
+                if (!IS_NUMBER(peek(0))) {
+                    runtime_error("Operand must be a number.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                *(vm.stack_top - 1) = NUMBER_VAL(AS_NUMBER(*(vm.stack_top - 1)) * -1);
+                break;
             case OP_RETURN: {
                 print_value(pop());
                 printf("\n");

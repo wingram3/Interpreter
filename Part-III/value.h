@@ -3,8 +3,35 @@
 
 #include "common.h"
 
-/* Constant value type. */
-typedef double Value;
+/* Enum to hold types of values. */
+typedef enum {
+    VAL_BOOL,
+    VAL_NIL,
+    VAL_NUMBER,
+} ValueType;
+
+/* Tagged union to hold a value's type tag and its actual value. */
+typedef struct {
+    ValueType type;
+    union {
+        bool boolean;
+        double number;
+    } as;
+} Value;
+
+/* Macros to check a clox Value's type for safety. */
+#define IS_BOOL(value)   ((value).type == VAL_BOOL)
+#define IS_NIL(value)    ((value).type == VAL_NIL)
+#define IS_NUMBER(value) ((value).type == VAL_NUMBER)
+
+/* Macros to unpack a clox Value and get the C value back out. */
+#define AS_BOOL(value)   ((value).as.boolean)
+#define AS_NUMBER(value) ((value).as.number)
+
+/* Macros to promote a native C value to a clox Value. */
+#define BOOL_VAL(value)   ((Value){VAL_BOOL, {.boolean = value}})
+#define NIL_VAL(value)    ((Value){VAL_NIL, {.number = 0}})
+#define NUMBER_VAL(value) ((Value){VAL_NUMBER, {.number = value}})
 
 /* Dynamic array structure to hold a chunk's constant pool. */
 typedef struct {

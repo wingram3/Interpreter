@@ -213,7 +213,7 @@ static void binary()
 /* ternary: function for compiling ternary (conditional) expressions. */
 static void ternary()
 {
-    // implement with other jumps codes.
+    // implement with other jump codes.
 }
 
 /* grouping: function for compiling grouping expressions. */
@@ -227,7 +227,7 @@ static void grouping()
 static void number()
 {
     double value = strtod(parser.previous.start, NULL);
-    emit_constant(value);
+    emit_constant(NUMBER_VAL(value));
 }
 
 /* unary: function for compiling unary expressions. */
@@ -245,7 +245,7 @@ static void unary()
 }
 
 /* Table of function pointers. */
-ParseRule rules[] = {     /* prefix    infix     mixfix  precedence */
+ParseRule rules[] = {     /* prefix    infix     mixfix     precedence */
     [TOKEN_LEFT_PAREN]    = {grouping, NULL,     NULL,      PREC_NONE},
     [TOKEN_RIGHT_PAREN]   = {NULL,     NULL,     NULL,      PREC_NONE},
     [TOKEN_LEFT_BRACE]    = {NULL,     NULL,     NULL,      PREC_NONE},
