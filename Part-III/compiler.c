@@ -247,6 +247,13 @@ static void number()
     emit_constant(NUMBER_VAL(value));
 }
 
+/* string: function for compiling strings. */
+static void string()
+{
+  emit_constant(OBJ_VAL(copy_string(parser.previous.start + 1,
+                                    parser.previous.length - 2)));
+}
+
 /* unary: function for compiling unary expressions. */
 static void unary()
 {
@@ -285,6 +292,7 @@ ParseRule rules[] = {     /* prefix    infix     mixfix     precedence */
     [TOKEN_GREATER_EQUAL] = {NULL,     binary,   NULL,      PREC_COMPARISON},
     [TOKEN_LESS]          = {NULL,     binary,   NULL,      PREC_COMPARISON},
     [TOKEN_LESS_EQUAL]    = {NULL,     binary,   NULL,      PREC_COMPARISON},
+    [TOKEN_STRING]        = {string,   NULL,     NULL,      PREC_NONE},
     [TOKEN_NUMBER]        = {number,   NULL,     NULL,      PREC_NONE},
     [TOKEN_CLASS]         = {NULL,     NULL,     NULL,      PREC_NONE},
     [TOKEN_ELSE]          = {NULL,     NULL,     NULL,      PREC_NONE},
