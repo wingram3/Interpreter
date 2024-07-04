@@ -19,7 +19,7 @@ typedef struct {
     } as;
 } Value;
 
-/* Macros to check a clox Value's type for safety. */
+/* Macros to check a clox Value's type before the AS_ macros are called. */
 #define IS_BOOL(value)   ((value).type == VAL_BOOL)
 #define IS_NIL(value)    ((value).type == VAL_NIL)
 #define IS_NUMBER(value) ((value).type == VAL_NUMBER)

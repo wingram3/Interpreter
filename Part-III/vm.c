@@ -111,7 +111,7 @@ static InterpretResult run()
 #define READ_CONSTANT_LONG() (vm.chunk->constants.values[READ_LONG()])
 
 /* ARITHMETIC_OP MACRO: avoids calling push() and pop(). */
-#define BINARY_OP(value_type, op)                     \
+#define BINARY_OP(value_type, op)                         \
     do {                                                  \
         if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
             runtime_error("Operands must be numbers.");   \
@@ -150,12 +150,13 @@ static InterpretResult run()
             case OP_NIL: push(NIL_VAL); break;
             case OP_TRUE: push(BOOL_VAL(true)); break;
             case OP_FALSE: push(BOOL_VAL(false)); break;
-            case OP_EQUAL:
+            case OP_EQUAL: {
                 *(vm.stack_top - 2) = BOOL_VAL(
                     values_equal(*(vm.stack_top - 1), *(vm.stack_top - 2))
                 );
                 vm.stack_top--;
                 break;
+            }
             case OP_GREATER:  BINARY_OP(BOOL_VAL, >); break;
             case OP_LESS:     BINARY_OP(BOOL_VAL, <); break;
             case OP_ADD:      BINARY_OP(NUMBER_VAL, +); break;
@@ -166,13 +167,14 @@ static InterpretResult run()
                 *(vm.stack_top - 1) = BOOL_VAL(is_falsey(*(--vm.stack_top)));
                 break;
             }
-            case OP_NEGATE:
+            case OP_NEGATE: {
                 if (!IS_NUMBER(peek(0))) {
                     runtime_error("Operand must be a number.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
                 *(vm.stack_top - 1) = NUMBER_VAL(AS_NUMBER(*(vm.stack_top - 1)) * -1);
                 break;
+            }
             case OP_RETURN: {
                 print_value(pop());
                 printf("\n");
