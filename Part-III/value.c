@@ -44,7 +44,7 @@ void print_value(Value value)
     }
 }
 
-/* values_equal: compare two values. */
+/* values_equal: compare two values for equality. */
 bool values_equal(Value a, Value b)
 {
     if (a.type != b.type) return false;
@@ -52,6 +52,42 @@ bool values_equal(Value a, Value b)
         case VAL_BOOL:   return AS_BOOL(a) == AS_BOOL(b);
         case VAL_NIL:    return true;
         case VAL_NUMBER: return AS_NUMBER(a) == AS_NUMBER(b);
+        default:         return false;
+    }
+}
+
+/* values_greater_equal: return true if a >= b. */
+bool values_greater_equal(Value a, Value b)
+{
+    if (a.type != b.type) return false;
+    switch (a.type) {
+        case VAL_BOOL:   return AS_BOOL(a) >= AS_BOOL(b);
+        case VAL_NIL:    return true;
+        case VAL_NUMBER: return AS_NUMBER(a) >= AS_NUMBER(b);
+        default:         return false;
+    }
+}
+
+/* values_less_equal: return true if a <= b. */
+bool values_less_equal(Value a, Value b)
+{
+    if (a.type != b.type) return false;
+    switch (a.type) {
+        case VAL_BOOL:   return AS_BOOL(a) <= AS_BOOL(b);
+        case VAL_NIL:    return true;
+        case VAL_NUMBER: return AS_NUMBER(a) <= AS_NUMBER(b);
+        default:         return false;
+    }
+}
+
+/* values_not_equal: return true if a != b. */
+bool values_not_equal(Value a, Value b)
+{
+    if (a.type != b.type) return false;
+    switch (a.type) {
+        case VAL_BOOL:   return AS_BOOL(a) != AS_BOOL(b);
+        case VAL_NIL:    return true;
+        case VAL_NUMBER: return AS_NUMBER(a) != AS_NUMBER(b);
         default:         return false;
     }
 }
