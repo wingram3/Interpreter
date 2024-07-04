@@ -150,12 +150,12 @@ static InterpretResult run()
             case OP_NIL: push(NIL_VAL); break;
             case OP_TRUE: push(BOOL_VAL(true)); break;
             case OP_FALSE: push(BOOL_VAL(false)); break;
-            case OP_EQUAL: {
-                Value a = pop();
-                Value b = pop();
-                push(BOOL_VAL(values_equal(a, b)));
+            case OP_EQUAL:
+                *(vm.stack_top - 2) = BOOL_VAL(
+                    values_equal(*(vm.stack_top - 1), *(vm.stack_top - 2))
+                );
+                vm.stack_top--;
                 break;
-            }
             case OP_GREATER:  BINARY_OP(BOOL_VAL, >); break;
             case OP_LESS:     BINARY_OP(BOOL_VAL, <); break;
             case OP_ADD:      BINARY_OP(NUMBER_VAL, +); break;
