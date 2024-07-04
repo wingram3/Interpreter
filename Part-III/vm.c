@@ -185,7 +185,7 @@ static InterpretResult run()
             case OP_MULTIPLY: BINARY_OP(NUMBER_VAL, *); break;
             case OP_DIVIDE:   BINARY_OP(NUMBER_VAL, /); break;
             case OP_NOT: {
-                *(vm.stack_top - 1) = BOOL_VAL(is_falsey(*(--vm.stack_top)));
+                *(vm.stack_top - 1) = BOOL_VAL(is_falsey(*(vm.stack_top - 1)));
                 break;
             }
             case OP_NEGATE: {
