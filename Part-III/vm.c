@@ -1,12 +1,15 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "chunk.h"
 #include "common.h"
 #include "compiler.h"
 #include "memory.h"
 #include "debug.h"
+#include "object.h"
+#include "memory.h"
 #include "value.h"
 #include "vm.h"
 
@@ -38,6 +41,7 @@ void init_vm()
 {
     vm.stack = (Value *)malloc(INITIAL_STACK_MAX * sizeof(Value));
     reset_stack();
+    vm.objects = NULL;
     vm.stack_capacity = INITIAL_STACK_MAX;
 }
 
@@ -45,6 +49,7 @@ void init_vm()
 void free_vm()
 {
     free(vm.stack);
+    free_objects();
 }
 
 /* push: push a Value onto the stack. */
@@ -76,6 +81,23 @@ static Value peek(int distance)
 static bool is_falsey(Value value)
 {
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+}
+
+/* concatenate: concatencate two string objects. */
+static void concatenate()
+{
+    ObjString *b = AS_STRING(*(vm.stack_top - 1));
+    ObjString *a = AS_STRING(*(vm.stack_top - 2));
+
+    int length = a->length + b->length;
+    char *chars = ALLOCATE(char, length + 1);
+    memcpy(chars, a->chars, a->length);
+    memcpy(chars + a->length, b->chars, b->length);
+    chars[length] = '\0';
+
+    ObjString *result = take_string(chars, length);
+    *(vm.stack_top - 2) = OBJ_VAL(result);
+    vm.stack_top--;
 }
 
 /* interpret: interpret a chunk of bytecode. */
@@ -168,7 +190,20 @@ static InterpretResult run()
             case OP_GREATER_EQUAL:  BINARY_OP(BOOL_VAL, >=); break;
             case OP_LESS:           BINARY_OP(BOOL_VAL, <); break;
             case OP_LESS_EQUAL:     BINARY_OP(BOOL_VAL, <=); break;
-            case OP_ADD:            BINARY_OP(NUMBER_VAL, +); break;
+            case OP_ADD: {
+                if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
+                    concatenate();
+                } else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
+                    double b = AS_NUMBER(*(vm.stack_top - 1));
+                    double a = AS_NUMBER(*(vm.stack_top - 2));
+                    *(vm.stack_top - 2) = NUMBER_VAL(a + b);
+                    vm.stack_top--;
+                } else {
+                    runtime_error("Operands must be two numbers or two strings.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
             case OP_SUBTRACT:       BINARY_OP(NUMBER_VAL, -); break;
             case OP_MULTIPLY:       BINARY_OP(NUMBER_VAL, *); break;
             case OP_DIVIDE:         BINARY_OP(NUMBER_VAL, /); break;

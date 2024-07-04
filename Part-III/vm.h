@@ -13,6 +13,7 @@ typedef struct {
     Value *stack;           // Dynamic stack array.
     Value *stack_top;       // Points just beyond the last element in the stack.
     int stack_capacity;     // Max capacity of the stack - dynamically changes as needed.
+    Obj *objects;           // Linked-list of every object.
 } VM;
 
 /* Enum to hold exit code values. */
@@ -21,6 +22,8 @@ typedef enum {
     INTERPRET_COMPILE_ERROR,
     INTERPRET_RUNTIME_ERROR,
 } InterpretResult;
+
+extern VM vm;
 
 void init_vm();
 void free_vm();
