@@ -30,7 +30,7 @@ typedef struct {
 
 /* Macros to promote a native C value to a clox Value. */
 #define BOOL_VAL(value)   ((Value){VAL_BOOL, {.boolean = value}})
-#define NIL_VAL(value)    ((Value){VAL_NIL, {.number = 0}})
+#define NIL_VAL           ((Value){VAL_NIL, {.number = 0}})
 #define NUMBER_VAL(value) ((Value){VAL_NUMBER, {.number = value}})
 
 /* Dynamic array structure to hold a chunk's constant pool. */
@@ -40,6 +40,7 @@ typedef struct {
     Value *values;
 } ValueArray;
 
+bool values_equal(Value a, Value b);
 void init_value_array(ValueArray *array);
 void write_value_array(ValueArray *array, Value value);
 void free_value_array(ValueArray *array);

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "chunk.h"
 #include "common.h"
 #include "compiler.h"
 #include "memory.h"
@@ -71,6 +72,12 @@ static Value peek(int distance)
     return vm.stack_top[-1 - distance];
 }
 
+/* is_falsey: nil and false are falsey, everything else behaves like true. */
+static bool is_falsey(Value value)
+{
+    return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+}
+
 /* interpret: interpret a chunk of bytecode. */
 InterpretResult interpret(const char *source)
 {
@@ -103,16 +110,17 @@ static InterpretResult run()
 #define READ_CONSTANT() (vm.chunk->constants.values[READ_BYTE()])
 #define READ_CONSTANT_LONG() (vm.chunk->constants.values[READ_LONG()])
 
-/* ARITHMETIC_OP MACRO: avoids pushing and popping from stack. */
-#define ARITHMETIC_OP(value_type, op)                     \
+/* ARITHMETIC_OP MACRO: avoids calling push() and pop(). */
+#define BINARY_OP(value_type, op)                     \
     do {                                                  \
         if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) { \
             runtime_error("Operands must be numbers.");   \
             return INTERPRET_RUNTIME_ERROR;               \
         }                                                 \
-        double b = AS_NUMBER(pop());                      \
-        double a = AS_NUMBER(pop());                      \
-        push(value_type(a op b));                         \
+        double b = AS_NUMBER(*(vm.stack_top - 1));        \
+        double a = AS_NUMBER(*(vm.stack_top - 2));        \
+        *(vm.stack_top - 2) = value_type(a op b);         \
+        vm.stack_top--;                                   \
     } while (false)
 
     // Instruction decoding.
@@ -139,10 +147,25 @@ static InterpretResult run()
                 push(constant);
                 break;
             }
-            case OP_ADD:      ARITHMETIC_OP(NUMBER_VAL, +); break;
-            case OP_SUBTRACT: ARITHMETIC_OP(NUMBER_VAL, -); break;
-            case OP_MULTIPLY: ARITHMETIC_OP(NUMBER_VAL, *); break;
-            case OP_DIVIDE:   ARITHMETIC_OP(NUMBER_VAL, /); break;
+            case OP_NIL: push(NIL_VAL); break;
+            case OP_TRUE: push(BOOL_VAL(true)); break;
+            case OP_FALSE: push(BOOL_VAL(false)); break;
+            case OP_EQUAL: {
+                Value a = pop();
+                Value b = pop();
+                push(BOOL_VAL(values_equal(a, b)));
+                break;
+            }
+            case OP_GREATER:  BINARY_OP(BOOL_VAL, >); break;
+            case OP_LESS:     BINARY_OP(BOOL_VAL, <); break;
+            case OP_ADD:      BINARY_OP(NUMBER_VAL, +); break;
+            case OP_SUBTRACT: BINARY_OP(NUMBER_VAL, -); break;
+            case OP_MULTIPLY: BINARY_OP(NUMBER_VAL, *); break;
+            case OP_DIVIDE:   BINARY_OP(NUMBER_VAL, /); break;
+            case OP_NOT: {
+                *(vm.stack_top - 1) = BOOL_VAL(is_falsey(*(--vm.stack_top)));
+                break;
+            }
             case OP_NEGATE:
                 if (!IS_NUMBER(peek(0))) {
                     runtime_error("Operand must be a number.");
