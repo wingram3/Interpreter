@@ -189,7 +189,14 @@ static void parse_precedence(Precedence precedence)
     while (precedence <= get_rule(parser.current.type)->precedence) {
         advance();
         ParseFn infix_rule = get_rule(parser.previous.type)->infix;
-        infix_rule();
+        if (infix_rule != NULL)
+            infix_rule();
+        else {
+            ParseFn mixfix_rule = get_rule(parser.previous.type)->mixfix;
+            if (mixfix_rule != NULL)
+                mixfix_rule();
+            else break;
+        }
     }
 }
 
@@ -230,7 +237,7 @@ static void literal()
 /* ternary: function for compiling ternary (conditional) expressions. */
 static void ternary()
 {
-    // implement with other jump codes.
+    // Finish implementing with other jump codes.
 }
 
 /* grouping: function for compiling grouping expressions. */
