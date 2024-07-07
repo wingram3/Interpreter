@@ -14,7 +14,7 @@ typedef enum {
     VAL_OBJ,
 } ValueType;
 
-/* Tagged union to hold a value's type tag and its actual value. */
+/* Tagged union to hold a Value's type tag and its actual value. */
 typedef struct {
     ValueType type;
     union {

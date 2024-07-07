@@ -208,18 +208,17 @@ static void binary()
     parse_precedence((Precedence)(rule->precedence + 1));
 
     switch (operator_type) {
+        case TOKEN_PLUS:          emit_byte(OP_ADD); break;
+        case TOKEN_MINUS:         emit_byte(OP_SUBTRACT); break;
         case TOKEN_BANG_EQUAL:    emit_byte(OP_NOT_EQUAL); break;
         case TOKEN_EQUAL_EQUAL:   emit_byte(OP_EQUAL); break;
         case TOKEN_GREATER:       emit_byte(OP_GREATER); break;
         case TOKEN_GREATER_EQUAL: emit_byte(OP_GREATER_EQUAL); break;
         case TOKEN_LESS:          emit_byte(OP_LESS); break;
         case TOKEN_LESS_EQUAL:    emit_byte(OP_LESS_EQUAL); break;
-        case TOKEN_PLUS:          emit_byte(OP_ADD); break;
-        case TOKEN_MINUS:         emit_byte(OP_SUBTRACT); break;
         case TOKEN_STAR:          emit_byte(OP_MULTIPLY); break;
         case TOKEN_SLASH:         emit_byte(OP_DIVIDE); break;
-        default:
-            return;
+        default: return;
     }
 }
 
