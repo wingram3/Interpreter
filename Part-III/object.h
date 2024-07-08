@@ -30,6 +30,7 @@ struct Obj {
 struct ObjString {
     Obj obj;
     int length;     // Number of bytes in the character array.
+    uint32_t hash;  // hash code for the string.
     char chars[];   // Flexible array member (the string itself).
 };
 
