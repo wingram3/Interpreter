@@ -169,6 +169,9 @@ static InterpretResult run()
                 push(constant);
                 break;
             }
+            case OP_ZERO: push(NUMBER_VAL(0.0)); break;
+            case OP_ONE: push(NUMBER_VAL(1.0)); break;
+            case OP_TWO: push(NUMBER_VAL(2.0)); break;
             case OP_NIL: push(NIL_VAL); break;
             case OP_TRUE: push(BOOL_VAL(true)); break;
             case OP_FALSE: push(BOOL_VAL(false)); break;

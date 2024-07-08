@@ -31,6 +31,12 @@ int disassemble_instruction(Chunk *chunk, int offset)
             return constant_instruction("OP_CONSTANT", chunk, offset);
         case OP_CONSTANT_LONG:
             return constant_long_instruction("OP_CONSTANT_LONG", chunk, offset);
+        case OP_ZERO:
+            return simple_instruction("OP_ZERO", offset);
+        case OP_ONE:
+            return simple_instruction("OP_ONE", offset);
+        case OP_TWO:
+            return simple_instruction("OP_TWO", offset);
         case OP_NIL:
             return simple_instruction("OP_NIL", offset);
         case OP_TRUE:

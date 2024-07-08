@@ -150,13 +150,12 @@ static int make_constant(Value value)
 static void emit_constant(Value value)
 {
     int constant = make_constant(value);
-    if (constant < 256) {
+    if (constant < 256)
         emit_bytes(OP_CONSTANT, (uint8_t)constant, -1);
-    } else {    // write the constant index as a 24-bit number if the index > 255.
+    else    // write the constant index as a 24-bit number if the index > 255.
         emit_bytes(OP_CONSTANT_LONG, (uint8_t)(constant & 0xFF),
             (uint8_t)((constant >> 8) & 0xFF),
             (uint8_t)((constant >> 16) & 0xFF), -1);
-    }
 }
 
 /* end_compiler: emit a return opcode instruction. */
@@ -250,7 +249,25 @@ static void grouping()
 static void number()
 {
     double value = strtod(parser.previous.start, NULL);
-    emit_constant(NUMBER_VAL(value));
+
+    switch ((int)value) {
+        case 0:
+            if (value == 0.0) {
+                emit_byte(OP_ZERO);
+                break;
+            }
+        case 1:
+            if (value == 1.0) {
+                emit_byte(OP_ONE);
+                break;
+            }
+        case 2:
+            if (value == 2.0) {
+                emit_byte(OP_TWO);
+                break;
+            }
+        default: emit_constant(NUMBER_VAL(value));
+    }
 }
 
 /* string: function for compiling strings. */
