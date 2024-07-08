@@ -14,23 +14,27 @@
 #define AS_STRING(value)    ((ObjString *)AS_OBJ(value))
 #define AS_CSTRING(value)   (((ObjString *)AS_OBJ(value))->chars)
 
+/* Enum to hold all the object types. */
 typedef enum {
     OBJ_STRING,
 } ObjType;
 
+/* Contains state shared across all object types.
+   Object composition - meant to mimic inheritance in OOP. */
 struct Obj {
     ObjType type;
-    struct Obj *next;
+    struct Obj *next;   // Points to next obj in the chain for memory management.
 };
 
+/* Payload for string objects. */
 struct ObjString {
     Obj obj;
-    int length;
-    char *chars;
+    int length;     // Number of bytes in the character array.
+    char chars[];   // Flexible array member (the string itself).
 };
 
 ObjString *take_string(char* chars, int length);
-ObjString *copy_string(const char* chars, int length);
+ObjString *copy_string(const char *chars, int length);
 void print_object(Value value);
 
 /* is_obj_type: tells when it is safe to cast a value to a specific object type. */

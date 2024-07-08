@@ -21,11 +21,15 @@ static Obj *allocate_object(size_t size, ObjType type) {
 }
 
 /* allocate_string: creates a new ObjString on the heap and then initializes its fields. */
-static ObjString *allocate_string(char *chars, int length)
+static ObjString *allocate_string(const char *chars, int length)
 {
-    ObjString *string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
+    ObjString *string = (ObjString *)allocate_object(
+        sizeof(ObjString) + length + 1, OBJ_STRING);
+
     string->length = length;
-    string->chars = chars;
+    memcpy(string->chars, chars, length);
+    string->chars[length] = '\0';
+
     return string;
 }
 
@@ -35,13 +39,10 @@ ObjString *take_string(char *chars, int length)
     return allocate_string(chars, length);
 }
 
-/* copy_string: creates a string object. */
+/* take_string: claims ownership of the string that is given to it. */
 ObjString *copy_string(const char *chars, int length)
 {
-    char *heap_chars = ALLOCATE(char, length + 1);
-    memcpy(heap_chars, chars, length);
-    heap_chars[length] = '\0';
-    return allocate_string(heap_chars, length);
+    return allocate_string(chars, length);
 }
 
 /* print_object: displays an object's value. */
