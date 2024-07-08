@@ -181,7 +181,7 @@ static InterpretResult run()
             }
             case OP_NOT_EQUAL: {
                 *(vm.stack_top - 2) = BOOL_VAL(
-                    values_not_equal(*(vm.stack_top - 2), *(vm.stack_top - 1))
+                    !values_equal(*(vm.stack_top - 2), *(vm.stack_top - 1))
                 );
                 vm.stack_top--;
                 break;

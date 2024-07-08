@@ -49,9 +49,6 @@ typedef struct {
 } ValueArray;
 
 bool values_equal(Value a, Value b);
-bool values_greater_equal(Value a, Value b);
-bool values_less_equal(Value a, Value b);
-bool values_not_equal(Value a, Value b);
 void init_value_array(ValueArray *array);
 void write_value_array(ValueArray *array, Value value);
 void free_value_array(ValueArray *array);
