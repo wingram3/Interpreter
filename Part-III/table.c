@@ -27,13 +27,32 @@ void free_table(Table *table)
 static Entry *find_entry(Entry *entries, int capacity, ObjString *key)
 {
     uint32_t index = key->hash % capacity;
+    Entry *tombstone = NULL;
+
     for (;;) {
         Entry *entry = &entries[index];
-        if (entry->key == key || entry->key == NULL)
+        if (entry->key == NULL) {
+            if (IS_NIL(entry->value))
+                return tombstone != NULL ? tombstone : entry;
+            else
+                if (tombstone == NULL) tombstone = entry;
+        } else if (entry->key == key)
             return entry;
 
         index = (index + 1) % capacity;
     }
+}
+
+/* table_get: returns true if entry with a specified key is found in the table. */
+bool table_get(Table *table, ObjString *key, Value *value)
+{
+    if (table->count == 0) return false;
+
+    Entry *entry = find_entry(table->entries, table->capacity, key);
+    if (entry->key == NULL) return false;
+
+    *value = entry->value;
+    return true;
 }
 
 /* adjust_capacity: create a bucket array with capacity entries. */
@@ -46,12 +65,14 @@ static void adjust_capacity(Table *table, int capacity)
     }
 
     // Re-insert each entry into the new empty array to avoid collisions.
+    table->count = 0;
     for (int i = 0; i < table->capacity; i++) {
         Entry *entry = &table->entries[i];
         if (entry->key == NULL) continue;
         Entry *dest = find_entry(entries, capacity, entry->key);
         dest->key = entry->key;
         dest->value = entry->value;
+        table->count++;
     }
 
     FREE_ARRAY(Entry, table->entries, table->capacity);
@@ -71,11 +92,26 @@ bool table_set(Table *table, ObjString *key, Value value)
     // Put the new entry in the table.
     Entry *entry = find_entry(table->entries, table->capacity, key);
     bool is_new_key = entry->key == NULL;
-    if (is_new_key) table->count++;
+    if (is_new_key && IS_NIL(entry->value)) table->count++;
 
     entry->key = key;
     entry->value = value;
     return is_new_key;    // Return true if the entry was added.
+}
+
+/* table_delete: delete an entry from a hash table. */
+bool table_delete(Table *table, ObjString *key)
+{
+    if (table->count == 0) return false;
+
+    // Find the entry.
+    Entry *entry = find_entry(table->entries, table->capacity, key);
+    if (entry->key == NULL) return false;
+
+    // Place a tombstone (null key, true value) in the entry.
+    entry->key = NULL;
+    entry->value = BOOL_VAL(true);
+    return true;
 }
 
 /* table_add_all: copy all entries of one hash table into another. */
@@ -85,5 +121,26 @@ void table_add_all(Table *from, Table *to)
         Entry *entry = &from->entries[i];
         if (entry->key != NULL)
             table_set(to, entry->key, entry->value);
+    }
+}
+
+/* table_find_string: use string interning to find a string in a hash table. */
+ObjString *table_find_string(Table *table, const char *chars,
+                             int length, uint32_t hash)
+{
+    if (table->count == 0) return NULL;
+
+    uint32_t index = hash % table->capacity;
+    for (;;) {
+        Entry *entry = &table->entries[index];
+        if (entry->key == NULL) {
+            if (IS_NIL(entry->value)) return NULL;
+            else if (entry->key->length == length &&
+                        entry->key->hash == hash &&
+                        memcmp(entry->key->chars, chars, length) == 0)
+            return entry->key;
+        }
+
+        index = (index + 1) % table->capacity;
     }
 }

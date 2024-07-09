@@ -43,6 +43,7 @@ void init_vm()
     reset_stack();
     vm.objects = NULL;
     vm.stack_capacity = INITIAL_STACK_MAX;
+    init_table(&vm.strings);
 }
 
 /* free_vm: free the virtual machine's memory. */
@@ -50,6 +51,7 @@ void free_vm()
 {
     free(vm.stack);
     free_objects();
+    free_table(&vm.strings);
 }
 
 /* push: push a Value onto the stack. */
