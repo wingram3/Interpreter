@@ -1,4 +1,3 @@
-#include <cmath>
 #include <stdlib.h>
 #include <string.h>
 
@@ -63,11 +62,13 @@ static void adjust_capacity(Table *table, int capacity)
 /* table_set: add a key-value pair to a hash table. */
 bool table_set(Table *table, ObjString *key, Value value)
 {
+    // Grow the table's capacity if necessary.
     if (table->count + 1 > table->capacity * TABLE_MAX_LOAD) {
         int capacity = GROW_CAPACITY(table->capacity);
         adjust_capacity(table, capacity);
     }
 
+    // Put the new entry in the table.
     Entry *entry = find_entry(table->entries, table->capacity, key);
     bool is_new_key = entry->key == NULL;
     if (is_new_key) table->count++;
