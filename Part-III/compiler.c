@@ -358,12 +358,31 @@ static void unary(bool can_assign)
 {
     TokenType operator_type = parser.previous.type;
 
-    parse_precedence(PREC_UNARY);   // compile the operand.
-
     // Emit the operator expression.
     switch (operator_type) {
-        case TOKEN_BANG: emit_byte(OP_NOT); break;
-        case TOKEN_MINUS: emit_byte(OP_NEGATE); break;
+        case TOKEN_BANG: {
+            parse_precedence(PREC_UNARY);
+            emit_byte(OP_NOT);
+            break;
+        }
+        case TOKEN_MINUS: {
+            parse_precedence(PREC_UNARY);
+            emit_byte(OP_NEGATE);
+            break;
+        }
+        case TOKEN_PLUS_PLUS:
+        case TOKEN_MINUS_MINUS: {
+            advance();
+            if (parser.previous.type != TOKEN_IDENTIFIER) {
+                error("Invalid use of increment/decrement operators.");
+                return;
+            }
+            int global = identifier_constant(&parser.previous);
+            emit_bytes(OP_GET_GLOBAL, global, OP_ONE,
+                       (operator_type == TOKEN_PLUS_PLUS ? OP_ADD : OP_SUBTRACT),
+                       OP_SET_GLOBAL, global, -1);
+            break;
+        }
         default: return;
     }
 }
@@ -378,6 +397,8 @@ ParseRule rules[] = {     /* prefix    infix     mixfix     precedence */
     [TOKEN_DOT]           = {NULL,     NULL,     NULL,      PREC_NONE},
     [TOKEN_MINUS]         = {unary,    binary,   NULL,      PREC_TERM},
     [TOKEN_PLUS]          = {NULL,     binary,   NULL,      PREC_TERM},
+    [TOKEN_PLUS_PLUS]     = {unary,    NULL,     NULL,      PREC_ASSIGNMENT},
+    [TOKEN_MINUS_MINUS]   = {unary,    NULL,     NULL,      PREC_ASSIGNMENT},
     [TOKEN_SEMICOLON]     = {NULL,     NULL,     NULL,      PREC_NONE},
     [TOKEN_SLASH]         = {NULL,     binary,   NULL,      PREC_FACTOR},
     [TOKEN_STAR]          = {NULL,     binary,   NULL,      PREC_FACTOR},
