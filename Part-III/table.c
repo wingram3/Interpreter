@@ -83,20 +83,18 @@ static void adjust_capacity(Table *table, int capacity)
 /* table_set: add a key-value pair to a hash table. */
 bool table_set(Table *table, ObjString *key, Value value)
 {
-    // Grow the table's capacity if necessary.
     if (table->count + 1 > table->capacity * TABLE_MAX_LOAD) {
         int capacity = GROW_CAPACITY(table->capacity);
         adjust_capacity(table, capacity);
     }
 
-    // Put the new entry in the table.
-    Entry *entry = find_entry(table->entries, table->capacity, key);
-    bool is_new_key = entry->key == NULL;
-    if (is_new_key && IS_NIL(entry->value)) table->count++;
+    Entry* entry = find_entry(table->entries, table->capacity, key);
+    bool isNewKey = entry->key == NULL;
+    if (isNewKey && IS_NIL(entry->value)) table->count++;
 
     entry->key = key;
     entry->value = value;
-    return is_new_key;    // Return true if the entry was added.
+    return isNewKey;
 }
 
 /* table_delete: delete an entry from a hash table. */
@@ -125,19 +123,20 @@ void table_add_all(Table *from, Table *to)
 }
 
 /* table_find_string: use string interning to find a string in a hash table. */
-ObjString *table_find_string(Table *table, const char *chars,
-                             int length, uint32_t hash)
+ObjString* table_find_string(Table* table, const char* chars,
+                           int length, uint32_t hash)
 {
     if (table->count == 0) return NULL;
 
     uint32_t index = hash % table->capacity;
     for (;;) {
-        Entry *entry = &table->entries[index];
+        Entry* entry = &table->entries[index];
         if (entry->key == NULL) {
+        // Stop if we find an empty non-tombstone entry.
             if (IS_NIL(entry->value)) return NULL;
-            else if (entry->key->length == length &&
-                        entry->key->hash == hash &&
-                        memcmp(entry->key->chars, chars, length) == 0)
+        } else if (entry->key->length == length &&
+            entry->key->hash == hash &&
+            memcmp(entry->key->chars, chars, length) == 0) {
             return entry->key;
         }
 

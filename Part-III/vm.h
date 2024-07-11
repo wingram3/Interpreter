@@ -13,6 +13,7 @@ typedef struct {
     uint8_t *ip;            // Instruction pointer.
     Value *stack;           // Dynamic stack array.
     Value *stack_top;       // Points just beyond the last element in the stack.
+    Table globals;          // Hash table to store global variables.
     Table strings;          // Hash table to store strings for string interning.
     int stack_capacity;     // Max capacity of the stack - dynamically changes as needed.
     Obj *objects;           // Linked-list of every object.

@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -107,6 +108,20 @@ static void consume(TokenType type, const char *message)
     error_at_current(message);
 }
 
+/* check: returns true if the current token matches a given token type. */
+static bool check(TokenType type)
+{
+    return parser.current.type == type;
+}
+
+/* match: advances and returns true if a token matches a given token type. */
+static bool match(TokenType type)
+{
+    if (!check(type)) return false;
+    advance();
+    return true;
+}
+
 /* emit_byte: append a single byte to the chunk. */
 static void emit_byte(uint8_t byte)
 {
@@ -151,11 +166,11 @@ static void emit_constant(Value value)
 {
     int constant = make_constant(value);
     if (constant < 256)
-        emit_bytes(OP_CONSTANT, (uint8_t)constant, -1);
-    else    // write the constant index as a 24-bit number if the index > 255.
-        emit_bytes(OP_CONSTANT_LONG, (uint8_t)(constant & 0xFF),
-            (uint8_t)((constant >> 8) & 0xFF),
-            (uint8_t)((constant >> 16) & 0xFF), -1);
+        emit_bytes(OP_CONSTANT, constant, -1);
+    else    // write the constant index as a 24-bit number if it's > 255.
+        emit_bytes(OP_CONSTANT_LONG, (constant & 0xFF),
+            ((constant >> 8) & 0xFF),
+            ((constant >> 16) & 0xFF), -1);
 }
 
 /* end_compiler: emit a return opcode instruction. */
@@ -169,8 +184,36 @@ static void end_compiler()
 }
 
 static void expression();
+static void statement();
+static void declaration();
 static ParseRule *get_rule(TokenType type);
 static void parse_precedence(Precedence precedence);
+
+/* identifier_constant: adds token's lexeme to the chunk’s const. table as string. */
+static int identifier_constant(Token *name)
+{
+    return make_constant(OBJ_VAL(copy_string(name->start,
+                                             name->length)));
+}
+
+/* parse_variable: uses identifier_constant(). */
+static int parse_variable(const char *error_message)
+{
+    consume(TOKEN_IDENTIFIER, error_message);
+    return identifier_constant(&parser.previous);
+}
+
+/* define_variable: outputs the bytecode instruction that defines the new variable,
+                    stores its initial value. */
+static void define_variable(int global)
+{
+    if (global < 256)
+        emit_bytes(OP_DEFINE_GLOBAL, global, -1);
+    else    // write global as a 24-bit number if it's > 255.
+        emit_bytes(OP_DEFINE_GLOBAL_LONG, (global & 0xFF),
+            ((global >> 8) & 0xFF),
+            ((global >> 16) & 0xFF), -1);
+}
 
 /* parse_precedence: starts at current token and parses any expr
    at the given precedence level or higher. */
@@ -277,6 +320,26 @@ static void string()
                                     parser.previous.length - 2)));
 }
 
+/* named_variable: take given identifier token, add its lexeme to
+                   the chunk’s constant table as a string. */
+static void named_variable(Token name)
+{
+    int arg = identifier_constant(&name);
+
+    if (arg < 256)
+        emit_bytes(OP_GET_GLOBAL, arg, -1);
+    else    // write arg as a 24-bit number if it's > 255.
+        emit_bytes(OP_GET_GLOBAL_LONG, (arg & 0xFF),
+            ((arg >> 8) & 0xFF),
+            ((arg >> 16) & 0xFF), -1);
+}
+
+/* variable: function for resolving variables. */
+static void variable()
+{
+    named_variable(parser.previous);
+}
+
 /* unary: function for compiling unary expressions. */
 static void unary()
 {
@@ -315,6 +378,7 @@ ParseRule rules[] = {     /* prefix    infix     mixfix     precedence */
     [TOKEN_GREATER_EQUAL] = {NULL,     binary,   NULL,      PREC_COMPARISON},
     [TOKEN_LESS]          = {NULL,     binary,   NULL,      PREC_COMPARISON},
     [TOKEN_LESS_EQUAL]    = {NULL,     binary,   NULL,      PREC_COMPARISON},
+    [TOKEN_IDENTIFIER]    = {variable, NULL,     NULL,      PREC_NONE},
     [TOKEN_STRING]        = {string,   NULL,     NULL,      PREC_NONE},
     [TOKEN_NUMBER]        = {number,   NULL,     NULL,      PREC_NONE},
     [TOKEN_CLASS]         = {NULL,     NULL,     NULL,      PREC_NONE},
@@ -340,10 +404,87 @@ static ParseRule *get_rule(TokenType type)
     return &rules[type];
 }
 
-/* expression:  */
+/* expression: expression → assignment ; */
 static void expression()
 {
     parse_precedence(PREC_ASSIGNMENT);
+}
+
+/* var_declaration: varDecl → "var" IDENTIFIER ( "=" expression )? ";" ; */
+static void var_declaration()
+{
+    int global = parse_variable("Expect variable name.");
+
+    if (match(TOKEN_EQUAL))
+        expression();
+    else
+        emit_byte(OP_NIL);
+
+    consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration.");
+
+    define_variable(global);
+}
+
+/* expression_statement: exprStmt → expression ";" ; */
+static void expression_statement()
+{
+    expression();
+    consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
+    emit_byte(OP_POP);
+}
+
+/* print_statement: printStmt → "print" expression ";" ;  */
+static void print_statement()
+{
+    expression();
+    consume(TOKEN_SEMICOLON, "Expect ';' after value.");
+    emit_byte(OP_PRINT);
+}
+
+/* synchronize: when in panic mode, skip tokens until statment boundary. */
+static void synchronize()
+{
+    parser.panic_mode = false;
+
+    while (parser.current.type != TOKEN_EOF) {
+        if (parser.previous.type == TOKEN_SEMICOLON) return;
+        switch (parser.current.type) {
+            case TOKEN_CLASS:
+            case TOKEN_FUN:
+            case TOKEN_VAR:
+            case TOKEN_FOR:
+            case TOKEN_IF:
+            case TOKEN_WHILE:
+            case TOKEN_PRINT:
+            case TOKEN_RETURN:
+            return;
+
+            default:
+                ; // Do nothing.
+        }
+        advance();
+    }
+}
+
+/* declaration: declaration → classDecl | funDecl | varDecl | statement ;  */
+static void declaration()
+{
+    if (match(TOKEN_VAR))
+        var_declaration();
+    else
+        statement();
+
+    if (parser.panic_mode) synchronize();
+}
+
+/* statement: statement → exprStmt | forStmt | ifStmt | printStmt | returnStmt
+                          | whileStmt | block ; */
+static void statement()
+{
+    if (match(TOKEN_PRINT))
+        print_statement();
+    else
+        expression_statement();
 }
 
 /* compile: compile the source text. */
@@ -356,8 +497,10 @@ bool compile(const char *source, Chunk *chunk)
     parser.panic_mode = false;
 
     advance();
-    expression();
-    consume(TOKEN_EOF, "Expect end of expression.");
+
+    while (!match(TOKEN_EOF))
+        declaration();
+
     end_compiler();
     return !parser.had_error;
 }
