@@ -177,7 +177,7 @@ static InterpretResult run()
             case OP_FALSE: push(BOOL_VAL(false)); break;
             case OP_POP:   pop(); break;
             case OP_GET_GLOBAL: {
-                ObjString* name = READ_STRING();
+                ObjString *name = READ_STRING();
                 Value value;
                 if (!table_get(&vm.globals, name, &value)) {
                     runtime_error("Undefined variable '%s'.", name->chars);
@@ -187,7 +187,7 @@ static InterpretResult run()
                 break;
             }
             case OP_GET_GLOBAL_LONG: {
-                ObjString* name = READ_STRING_LONG();
+                ObjString *name = READ_STRING_LONG();
                 Value value;
                 if (!table_get(&vm.globals, name, &value)) {
                     runtime_error("Undefined variable '%s'.", name->chars);
@@ -196,14 +196,32 @@ static InterpretResult run()
                 push(value);
                 break;
             }
+            case OP_SET_GLOBAL: {
+                ObjString *name = READ_STRING();
+                if (table_set(&vm.globals, name, peek(0))) {
+                    table_delete(&vm.globals, name);
+                    runtime_error("Undefined variable '%s'.", name->chars);
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
+            case OP_SET_GLOBAL_LONG: {
+                ObjString *name = READ_STRING_LONG();
+                if (table_set(&vm.globals, name, peek(0))) {
+                    table_delete(&vm.globals, name);
+                    runtime_error("Undefined variable '%s'.", name->chars);
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
+            }
             case OP_DEFINE_GLOBAL: {
-                ObjString* name = READ_STRING();
+                ObjString *name = READ_STRING();
                 table_set(&vm.globals, name, peek(0));
                 pop();
                 break;
             }
             case OP_DEFINE_GLOBAL_LONG: {
-                ObjString* name = READ_STRING_LONG();
+                ObjString *name = READ_STRING_LONG();
                 table_set(&vm.globals, name, peek(0));
                 pop();
                 break;

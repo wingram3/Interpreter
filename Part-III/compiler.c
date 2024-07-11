@@ -35,7 +35,7 @@ typedef enum {
     PREC_PRIMARY
 } Precedence;
 
-typedef void (*ParseFn)();
+typedef void (*ParseFn)(bool can_assign);
 
 /* Structure to represent a single row in the parser table. */
 typedef struct {
@@ -123,9 +123,9 @@ static bool match(TokenType type)
 }
 
 /* emit_byte: append a single byte to the chunk. */
-static void emit_byte(uint8_t byte)
+static void emit_byte(int byte)
 {
-    write_chunk(current_chunk(), byte, parser.previous.line);
+    write_chunk(current_chunk(), (uint8_t)byte, parser.previous.line);
 }
 
 /* emit_bytes: append an arbitary number of bytes to the chunk.
@@ -134,11 +134,11 @@ static void emit_bytes(int first_byte, ...)
 {
     va_list args;
     va_start(args, first_byte);
-    emit_byte((uint8_t)first_byte);
+    emit_byte(first_byte);
 
     int byte;
     while ((byte = va_arg(args, int)) != -1)  // -1 is the sentinel value.
-        emit_byte((uint8_t)byte);
+        emit_byte(byte);
 
     va_end(args);
 }
@@ -226,24 +226,27 @@ static void parse_precedence(Precedence precedence)
         return;
     }
 
-    prefix_rule();
+    bool can_assign = precedence <= PREC_ASSIGNMENT;
+    prefix_rule(can_assign);
 
     while (precedence <= get_rule(parser.current.type)->precedence) {
         advance();
         ParseFn infix_rule = get_rule(parser.previous.type)->infix;
         if (infix_rule != NULL)
-            infix_rule();
+            infix_rule(can_assign);
         else {
             ParseFn mixfix_rule = get_rule(parser.previous.type)->mixfix;
             if (mixfix_rule != NULL)
-                mixfix_rule();
+                mixfix_rule(can_assign);
             else break;
         }
     }
+    if (can_assign && match(TOKEN_EQUAL))
+        error("Invalid assignment target.");
 }
 
 /* binary: function for compiling binary expressions. */
-static void binary()
+static void binary(bool can_assign)
 {
     TokenType operator_type = parser.previous.type;
     ParseRule *rule = get_rule(operator_type);
@@ -265,7 +268,7 @@ static void binary()
 }
 
 /* literal: function for compiling true, false, and nil. */
-static void literal()
+static void literal(bool can_assign)
 {
     switch (parser.previous.type) {
         case TOKEN_FALSE: emit_byte(OP_FALSE); break;
@@ -276,20 +279,20 @@ static void literal()
 }
 
 /* ternary: function for compiling ternary (conditional) expressions. */
-static void ternary()
+static void ternary(bool can_assign)
 {
     // Finish implementing with other jump codes.
 }
 
 /* grouping: function for compiling grouping expressions. */
-static void grouping()
+static void grouping(bool can_assign)
 {
     expression();   // this inner call handles bytecode generation for the expr in parentheses.
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
 }
 
 /* number: function for compiling number literal expressions. */
-static void number()
+static void number(bool can_assign)
 {
     double value = strtod(parser.previous.start, NULL);
 
@@ -314,7 +317,7 @@ static void number()
 }
 
 /* string: function for compiling strings. */
-static void string()
+static void string(bool can_assign)
 {
   emit_constant(OBJ_VAL(copy_string(parser.previous.start + 1,
                                     parser.previous.length - 2)));
@@ -322,26 +325,36 @@ static void string()
 
 /* named_variable: take given identifier token, add its lexeme to
                    the chunk’s constant table as a string. */
-static void named_variable(Token name)
+static void named_variable(Token name, bool can_assign)
 {
     int arg = identifier_constant(&name);
 
-    if (arg < 256)
-        emit_bytes(OP_GET_GLOBAL, arg, -1);
-    else    // write arg as a 24-bit number if it's > 255.
-        emit_bytes(OP_GET_GLOBAL_LONG, (arg & 0xFF),
-            ((arg >> 8) & 0xFF),
-            ((arg >> 16) & 0xFF), -1);
+    if (can_assign && match(TOKEN_EQUAL)) {
+        expression();
+        if (arg < 256)
+            emit_bytes(OP_SET_GLOBAL, arg, -1);
+        else    // write arg as a 24-bit number if it's > 255.
+            emit_bytes(OP_SET_GLOBAL_LONG, (arg & 0xFF),
+                ((arg >> 8) & 0xFF),
+                ((arg >> 16) & 0xFF), -1);
+    } else {
+        if (arg < 256)
+            emit_bytes(OP_GET_GLOBAL, arg, -1);
+        else
+            emit_bytes(OP_GET_GLOBAL_LONG, (arg & 0xFF),
+                ((arg >> 8) & 0xFF),
+                ((arg >> 16) & 0xFF), -1);
+    }
 }
 
 /* variable: function for resolving variables. */
-static void variable()
+static void variable(bool can_assign)
 {
-    named_variable(parser.previous);
+    named_variable(parser.previous, can_assign);
 }
 
 /* unary: function for compiling unary expressions. */
-static void unary()
+static void unary(bool can_assign)
 {
     TokenType operator_type = parser.previous.type;
 
