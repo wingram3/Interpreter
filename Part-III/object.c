@@ -47,13 +47,13 @@ ObjString *take_string(char *chars, int length)
 {
     uint32_t hash = hash_string(chars, length);
 
-    ObjString* interned = table_find_string(&vm.strings, chars, length, hash);
+    ObjString *interned = table_find_string(&vm.strings, chars, length, hash);
     if (interned != NULL) {
         FREE_ARRAY(char, chars, length + 1);
         return interned;
     }
 
-    ObjString* string = allocate_string(length, hash);
+    ObjString *string = allocate_string(length, hash);
     memcpy(string->chars, chars, length);
     string->chars[length] = '\0';
 
@@ -61,15 +61,15 @@ ObjString *take_string(char *chars, int length)
     return string;
 }
 
-/* copy_string:  */
+/* copy_string: allocate a new string from the source code on the heap. */
 ObjString *copy_string(const char *chars, int length)
 {
     uint32_t hash = hash_string(chars, length);
 
-    ObjString* interned = table_find_string(&vm.strings, chars, length, hash);
+    ObjString *interned = table_find_string(&vm.strings, chars, length, hash);
     if (interned != NULL) return interned;
 
-    ObjString* string = allocate_string(length, hash);
+    ObjString *string = allocate_string(length, hash);
     memcpy(string->chars, chars, length);
     string->chars[length] = '\0';
 
