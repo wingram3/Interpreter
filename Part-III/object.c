@@ -22,15 +22,12 @@ static Obj *allocate_object(size_t size, ObjType type) {
 }
 
 /* allocate_string: creates a new ObjString on the heap and then initializes its fields. */
-static ObjString *allocate_string(char *chars, int length, uint32_t hash)
+static ObjString *allocate_string(int length, uint32_t hash)
 {
-    ObjString* string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
+    ObjString *string = (ObjString *)allocate_object(
+        sizeof(ObjString) + length + 1, OBJ_STRING);
     string->length = length;
-    string->chars = chars;
-
     string->hash = hash;
-    table_set(&vm.strings, string, NIL_VAL);
-
     return string;
 }
 
@@ -50,14 +47,18 @@ ObjString *take_string(char *chars, int length)
 {
     uint32_t hash = hash_string(chars, length);
 
-    ObjString* interned = table_find_string(&vm.strings, chars, length,
-                                            hash);
+    ObjString* interned = table_find_string(&vm.strings, chars, length, hash);
     if (interned != NULL) {
         FREE_ARRAY(char, chars, length + 1);
         return interned;
     }
 
-    return allocate_string(chars, length, hash);
+    ObjString* string = allocate_string(length, hash);
+    memcpy(string->chars, chars, length);
+    string->chars[length] = '\0';
+
+    table_set(&vm.strings, string, NIL_VAL);
+    return string;
 }
 
 /* copy_string:  */
@@ -65,15 +66,15 @@ ObjString *copy_string(const char *chars, int length)
 {
     uint32_t hash = hash_string(chars, length);
 
-    ObjString* interned = table_find_string(&vm.strings, chars, length,
-                                            hash);
+    ObjString* interned = table_find_string(&vm.strings, chars, length, hash);
     if (interned != NULL) return interned;
 
-    char* heapChars = ALLOCATE(char, length + 1);
-    memcpy(heapChars, chars, length);
-    heapChars[length] = '\0';
+    ObjString* string = allocate_string(length, hash);
+    memcpy(string->chars, chars, length);
+    string->chars[length] = '\0';
 
-    return allocate_string(heapChars, length, hash);
+    table_set(&vm.strings, string, NIL_VAL);
+    return string;
 }
 
 /* print_object: displays an object's value. */

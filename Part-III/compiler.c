@@ -319,8 +319,8 @@ static void number(bool can_assign)
 /* string: function for compiling strings. */
 static void string(bool can_assign)
 {
-  emit_constant(OBJ_VAL(copy_string(parser.previous.start + 1,
-                                    parser.previous.length - 2)));
+    emit_constant(OBJ_VAL(copy_string(parser.previous.start + 1,
+                                      parser.previous.length - 2)));
 }
 
 /* named_variable: take given identifier token, add its lexeme to
