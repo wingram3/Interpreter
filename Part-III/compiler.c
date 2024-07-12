@@ -378,9 +378,16 @@ static void unary(bool can_assign)
                 return;
             }
             int global = identifier_constant(&parser.previous);
-            emit_bytes(OP_GET_GLOBAL, global, OP_ONE,
-                       (operator_type == TOKEN_PLUS_PLUS ? OP_ADD : OP_SUBTRACT),
-                       OP_SET_GLOBAL, global, -1);
+            if (global < 256)
+                emit_bytes(OP_GET_GLOBAL, global, OP_ONE,
+                          (operator_type == TOKEN_PLUS_PLUS ? OP_ADD : OP_SUBTRACT),
+                          OP_SET_GLOBAL, global, -1);
+            else
+                emit_bytes(OP_GET_GLOBAL_LONG, (global & 0xFF), ((global >> 8) & 0xFF),
+                          ((global >> 16) & 0xFF), OP_ONE,
+                          (operator_type == TOKEN_PLUS_PLUS ? OP_ADD : OP_SUBTRACT),
+                          OP_SET_GLOBAL_LONG, (global & 0xFF), ((global >> 8) & 0xFF),
+                          ((global >> 16) & 0xFF), -1);
             break;
         }
         default: return;
