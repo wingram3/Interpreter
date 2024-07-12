@@ -176,6 +176,11 @@ static InterpretResult run()
             case OP_TRUE:  push(BOOL_VAL(true)); break;
             case OP_FALSE: push(BOOL_VAL(false)); break;
             case OP_POP:   pop(); break;
+            case OP_POPN: {
+                int count = READ_BYTE();
+                while (count-- > 0) pop();
+                break;
+            }
             case OP_GET_GLOBAL: {
                 ObjString *name = READ_STRING();
                 Value value;

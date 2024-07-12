@@ -16,6 +16,7 @@ typedef enum {
     OP_TRUE,
     OP_FALSE,
     OP_POP,
+    OP_POPN,                // Implement.
     OP_GET_GLOBAL,
     OP_GET_GLOBAL_LONG,
     OP_SET_GLOBAL,

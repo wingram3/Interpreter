@@ -215,13 +215,20 @@ static void begin_scope()
 /* end_scope: end a local scope. */
 static void end_scope()
 {
+    int local_count_to_pop = 0;
     current->scope_depth--;
 
     while (current->local_count > 0 &&
            current->locals[current->local_count - 1].depth >
            current->scope_depth) {
-        emit_byte(OP_POP);
+        local_count_to_pop++;
         current->local_count--;
+    }
+
+    if (local_count_to_pop > 1) {
+        emit_bytes(OP_POPN, local_count_to_pop, -1);
+    } else if (local_count_to_pop == 1) {
+        emit_byte(OP_POP);
     }
 }
 
