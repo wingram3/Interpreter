@@ -55,6 +55,10 @@ int disassemble_instruction(Chunk *chunk, int offset)
             return constant_instruction("OP_SET_GLOBAL", chunk, offset);
         case OP_SET_GLOBAL_LONG:
             return constant_long_instruction("OP_SET_GLOBAL_LONG", chunk, offset);
+        case OP_GET_LOCAL:
+            return byte_instruction("OP_GET_LOCAL", chunk, offset);
+        case OP_SET_LOCAL:
+            return byte_instruction("OP_SET_LOCAL", chunk, offset);
         case OP_DEFINE_GLOBAL:
             return constant_instruction("OP_DEFINE_GLOBAL", chunk, offset);
         case OP_DEFINE_GLOBAL_LONG:
@@ -94,6 +98,14 @@ static int simple_instruction(const char *name, int offset)
 {
     printf("%s\n", name);
     return offset + 1;
+}
+
+/* byte_instruction:  */
+static int byte_instruction(const char *name, Chunk *chunk, int offset)
+{
+    uint8_t slot = chunk->code[offset + 1];
+    printf("%-16s %4d\n", name, offset);
+    return offset + 2;
 }
 
 /* constant_instruction: display the opcode at an offset w/ its constant value. */
