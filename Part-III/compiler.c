@@ -176,16 +176,22 @@ static int make_constant(Value value)
     return constant;
 }
 
+/* emit_constant_long: emit a 24-bit constant over three bytes to the chunk. */
+static void emit_constant_24bit(int number)
+{
+    emit_bytes(number & 0xFF, (number >> 8) & 0xFF, (number >> 16) & 0xFF, -1);
+}
+
 /* emit_constant: emit a constant value. */
 static void emit_constant(Value value)
 {
     int constant = make_constant(value);
     if (constant < 256)
         emit_bytes(OP_CONSTANT, constant, -1);
-    else    // write the constant index as a 24-bit number if it's > 255.
-        emit_bytes(OP_CONSTANT_LONG, (constant & 0xFF),
-            ((constant >> 8) & 0xFF),
-            ((constant >> 16) & 0xFF), -1);
+    else {
+        emit_byte(OP_CONSTANT_LONG);
+        emit_constant_24bit(constant);
+    }
 }
 
 /* init_compiler: initialize the compiler. */
@@ -326,14 +332,14 @@ static void define_variable(int global)
 
     if (global < 256)
         emit_bytes(OP_DEFINE_GLOBAL, global, -1);
-    else    // write global as a 24-bit number if it's > 255.
-        emit_bytes(OP_DEFINE_GLOBAL_LONG, (global & 0xFF),
-            ((global >> 8) & 0xFF),
-            ((global >> 16) & 0xFF), -1);
+    else {
+        emit_byte(OP_DEFINE_GLOBAL_LONG);
+        emit_constant_24bit(global);
+    }
 }
 
 /* parse_precedence: starts at current token and parses any expr
-   at the given precedence level or higher. */
+                     at the given precedence level or higher. */
 static void parse_precedence(Precedence precedence)
 {
     advance();
@@ -453,13 +459,15 @@ static void named_variable(Token name, bool can_assign)
     if (can_assign && match(TOKEN_EQUAL)) {
         expression();
         if (get_op == OP_GET_GLOBAL_LONG) {
-            emit_bytes(set_op, arg & 0xFF, (arg >> 8) & 0xFF, (arg >> 16) & 0xFF, -1);
+            emit_byte(set_op);
+            emit_constant_24bit(arg);
         } else {
             emit_bytes(set_op, arg, -1);
         }
     } else {
         if (get_op == OP_GET_GLOBAL_LONG) {
-            emit_bytes(get_op, arg & 0xFF, (arg >> 8) & 0xFF, (arg >> 16) & 0xFF, -1);
+            emit_byte(get_op);
+            emit_constant_24bit(arg);
         } else {
             emit_bytes(get_op, arg, -1);
         }
