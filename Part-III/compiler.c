@@ -458,7 +458,7 @@ static void named_variable(Token name, bool can_assign)
 
     if (can_assign && match(TOKEN_EQUAL)) {
         expression();
-        if (get_op == OP_GET_GLOBAL_LONG) {
+        if (get_op == OP_SET_GLOBAL_LONG) {
             emit_byte(set_op);
             emit_constant_24bit(arg);
         } else {
