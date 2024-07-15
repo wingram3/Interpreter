@@ -13,6 +13,8 @@
 #include "debug.h"
 #endif
 
+#define UINT24_MAX  16777216
+
 typedef struct {
     Token current;
     Token previous;
@@ -174,7 +176,7 @@ static void emit_return()
 static int make_constant(Value value)
 {
     int constant = add_constant(current_chunk(), value);
-    if (constant > 16777216) {
+    if (constant > UINT24_MAX) {
         error("Too many constants in one chunk.");
         return 0;
     }
@@ -477,7 +479,7 @@ static void number(bool can_assign)
     }
 }
 
-/* or_: function for compiling logical or expressions. */
+/* logic_or: function for compiling logical or expressions. */
 static void logic_or(bool can_assign)
 {
     int end_jump = emit_jump(OP_JUMP_IF_TRUE);
