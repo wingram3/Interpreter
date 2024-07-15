@@ -424,7 +424,19 @@ static void literal(bool can_assign)
 /* ternary: function for compiling ternary (conditional) expressions. */
 static void ternary(bool can_assign)
 {
-    // Finish implementing with other jump codes.
+    int else_jump = emit_jump(OP_JUMP_IF_FALSE);
+    emit_byte(OP_POP);
+    expression();
+
+    int end_jump = emit_jump(OP_JUMP);
+    patch_jump(else_jump);
+
+    emit_byte(OP_POP);
+
+    consume(TOKEN_COLON, "Expect ':' after then branch of ternary expression.");
+
+    expression();
+    patch_jump(end_jump);
 }
 
 /* grouping: function for compiling grouping expressions. */
@@ -530,7 +542,7 @@ ParseRule rules[] = {     /* prefix    infix     mixfix     precedence */
     [TOKEN_BANG_EQUAL]    = {NULL,     binary,   NULL,      PREC_EQUALITY},
     [TOKEN_EQUAL]         = {NULL,     NULL,     NULL,      PREC_NONE},
     [TOKEN_QUESTION]      = {NULL,     NULL,     ternary,   PREC_TERNARY},
-    [TOKEN_COLON]         = {NULL,     NULL,     NULL,      PREC_TERNARY},
+    [TOKEN_COLON]         = {NULL,     NULL,     NULL,      PREC_NONE},
     [TOKEN_EQUAL_EQUAL]   = {NULL,     binary,   NULL,      PREC_EQUALITY},
     [TOKEN_GREATER]       = {NULL,     binary,   NULL,      PREC_COMPARISON},
     [TOKEN_GREATER_EQUAL] = {NULL,     binary,   NULL,      PREC_COMPARISON},
