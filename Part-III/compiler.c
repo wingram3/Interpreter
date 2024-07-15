@@ -424,9 +424,11 @@ static void literal(bool can_assign)
 /* ternary: function for compiling ternary (conditional) expressions. */
 static void ternary(bool can_assign)
 {
+    // Condition expression's value is already on the stack by now.
+
     int else_jump = emit_jump(OP_JUMP_IF_FALSE);
     emit_byte(OP_POP);
-    expression();
+    expression();       // Then expression.
 
     int end_jump = emit_jump(OP_JUMP);
     patch_jump(else_jump);
@@ -434,8 +436,8 @@ static void ternary(bool can_assign)
     emit_byte(OP_POP);
 
     consume(TOKEN_COLON, "Expect ':' after then branch of ternary expression.");
+    expression();       // Else expression.
 
-    expression();
     patch_jump(end_jump);
 }
 
@@ -616,20 +618,21 @@ static void expression_statement()
                  ( "else" statement )? ; */
 static void if_statement()
 {
+    // Condition expression leaves its value on the stack.
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
     expression();
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
 
     int then_jump = emit_jump(OP_JUMP_IF_FALSE);
     emit_byte(OP_POP);
-    statement();
+    statement();    // Then statement.
 
     int else_jump = emit_jump(OP_JUMP);
 
     patch_jump(then_jump);
     emit_byte(OP_POP);
 
-    if (match(TOKEN_ELSE)) statement();
+    if (match(TOKEN_ELSE)) statement();    // Else statement.
     patch_jump(else_jump);
 }
 
