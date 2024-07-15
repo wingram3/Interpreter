@@ -1,4 +1,5 @@
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -80,10 +81,12 @@ static Value peek(int distance)
     return vm.stack_top[-1 - distance];
 }
 
-/* is_falsey: nil and false are falsey, everything else behaves like true. */
+/* is_falsey: nil, zero, and false are falsey, everything else behaves like true. */
 static bool is_falsey(Value value)
 {
-    return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+    return IS_NIL(value) ||
+    AS_NUMBER(value) == 0 ||
+    (IS_BOOL(value) && !AS_BOOL(value));
 }
 
 /* concatenate: concatencate two string objects. */
@@ -291,6 +294,11 @@ static InterpretResult run()
             case OP_JUMP: {
                 uint16_t offset = READ_SHORT();
                 vm.ip += offset;
+                break;
+            }
+            case OP_JUMP_IF_TRUE: {
+                uint16_t offset = READ_SHORT();
+                if (!is_falsey(peek(0))) vm.ip += offset;
                 break;
             }
             case OP_JUMP_IF_FALSE: {
