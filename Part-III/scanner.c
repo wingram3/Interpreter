@@ -92,22 +92,24 @@ static Token error_token(const char *message)
     return token;
 }
 
-/* skip_comment: handles block comments similarly to string literals. */
-static Token block_comment()
-{
-    while(peek() != '*' && !is_at_end()) {
-        if (peek() == '\n') scanner.line++;
+/* skip_block_comment: skips over C style block comments (like this one). */
+static void skip_block_comment() {
+    advance(); // Advance past '/'
+    advance(); // Advance past '*'
+
+    while (true) {
+        if (peek() == '\n') {
+            scanner.line++;
+        } else if (peek() == '*' && peek_next() == '/') {
+            advance();
+            advance();
+            break;
+        } else if (is_at_end()) {
+            error_token("Unterminated block comment.");
+            return;
+        }
         advance();
     }
-    if (is_at_end()) return error_token("Unterminated block comment.");
-    advance();
-
-    if (peek() != '/') {
-        return error_token("Unterminated block comment");
-    }
-
-    advance();
-    return make_token(TOKEN_BLOCK_COMMENT);
 }
 
 /* skip_whitespace: advances scanner past any leading whitespace. */
@@ -129,7 +131,7 @@ static void skip_whitespace()
                 if (peek_next() == '/') {
                     while (peek() != '\n' && !is_at_end()) advance();
                 } else if (peek_next() == '*') {
-                    block_comment();
+                    skip_block_comment();
                 } else {
                     return;
                 }

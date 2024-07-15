@@ -144,7 +144,7 @@ static void emit_byte(int byte)
 }
 
 /* emit_bytes: append an arbitary number of bytes to the chunk.
-   usage: emit_bytes(byte1, byte2, byte3, ..., -1); */
+               usage: emit_bytes(byte1, byte2, byte3, ..., -1); */
 static void emit_bytes(int first_byte, ...)
 {
     va_list args;
@@ -158,7 +158,14 @@ static void emit_bytes(int first_byte, ...)
     va_end(args);
 }
 
-/* emit_return:  */
+/* emit_jump:  */
+static int emit_jump(int instruction)
+{
+    emit_bytes(instruction, 0xFF, 0xFF, -1);    // Emit instruction and placeholder operand.
+    return current_chunk()->count - 2;
+}
+
+/* emit_return: emit a return opcode. */
 static void emit_return()
 {
     emit_byte(OP_RETURN);
@@ -192,6 +199,19 @@ static void emit_constant(Value value)
         emit_byte(OP_CONSTANT_LONG);
         emit_constant_24bit(constant);
     }
+}
+
+/* patch_jump: go back into bytecode, replace placeholder jump operand. */
+static void patch_jump(int offset)
+{
+    // -2 to adjust for the bytecode for the jump offset itself.
+    int jump = current_chunk()->count - offset - 2;
+
+    if (jump > UINT16_MAX)
+        error("Too much code to jump over.");
+
+    current_chunk()->code[offset] = (jump >> 8) & 0xFF;
+    current_chunk()->code[offset + 1] = jump & 0xFF;
 }
 
 /* init_compiler: initialize the compiler. */
@@ -451,8 +471,8 @@ static void string(bool can_assign)
 static void named_variable(Token name, bool can_assign)
 {
     int arg = resolve_local(current, &name);
-    uint8_t get_op = (arg != 1) ? OP_GET_LOCAL : (arg < 256 ? OP_GET_GLOBAL : OP_GET_GLOBAL_LONG);
-    uint8_t set_op = (arg != 1) ? OP_SET_LOCAL : (arg < 256 ? OP_SET_GLOBAL : OP_SET_GLOBAL_LONG);
+    uint8_t get_op = (arg != -1) ? OP_GET_LOCAL : (arg < 256 ? OP_GET_GLOBAL : OP_GET_GLOBAL_LONG);
+    uint8_t set_op = (arg != -1) ? OP_SET_LOCAL : (arg < 256 ? OP_SET_GLOBAL : OP_SET_GLOBAL_LONG);
 
     if (arg == -1) arg = identifier_constant(&name);    // Global variable.
 
@@ -580,6 +600,27 @@ static void expression_statement()
     emit_byte(OP_POP);
 }
 
+/* if_statement: ifStmt → "if" "(" expression ")" statement
+                 ( "else" statement )? ; */
+static void if_statement()
+{
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
+    expression();
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+    int then_jump = emit_jump(OP_JUMP_IF_FALSE);
+    emit_byte(OP_POP);
+    statement();
+
+    int else_jump = emit_jump(OP_JUMP);
+
+    patch_jump(then_jump);
+    emit_byte(OP_POP);
+
+    if (match(TOKEN_ELSE)) statement();
+    patch_jump(else_jump);
+}
+
 /* print_statement: printStmt → "print" expression ";" ;  */
 static void print_statement()
 {
@@ -630,6 +671,8 @@ static void statement()
 {
     if (match(TOKEN_PRINT)) {
         print_statement();
+    } else if (match(TOKEN_IF)) {
+        if_statement();
     } else if (match(TOKEN_LEFT_BRACE)) {
         begin_scope();
         block();
@@ -637,7 +680,6 @@ static void statement()
     } else {
         expression_statement();
     }
-
 }
 
 /* compile: compile the source text. */

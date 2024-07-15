@@ -89,6 +89,10 @@ int disassemble_instruction(Chunk *chunk, int offset)
             return simple_instruction("OP_NOT_EQUAL", offset);
         case OP_NEGATE:
             return simple_instruction("OP_NEGATE", offset);
+        case OP_JUMP:
+            return jump_instruction("OP_JUMP", 1, chunk, offset);
+        case OP_JUMP_IF_FALSE:
+            return jump_instruction("OP_JUMP_IF_FALSE", 1, chunk, offset);
         default:
             printf("Unknown opcode %d\n", instruction);
             return offset + 1;
@@ -102,12 +106,23 @@ static int simple_instruction(const char *name, int offset)
     return offset + 1;
 }
 
-/* byte_instruction:  */
+/* byte_instruction: */
 static int byte_instruction(const char *name, Chunk *chunk, int offset)
 {
     uint8_t slot = chunk->code[offset + 1];
     printf("%-16s %4d\n", name, offset);
     return offset + 2;
+}
+
+/* jump_instruction: */
+static int jump_instruction(const char* name, int sign,
+                           Chunk* chunk, int offset)
+{
+    uint16_t jump = (uint16_t)(chunk->code[offset + 1] << 8);
+    jump |= chunk->code[offset + 2];
+    printf("%-16s %4d -> %d\n", name, offset,
+            offset + 3 + sign * jump);
+    return offset + 3;
 }
 
 /* constant_instruction: display the opcode at an offset w/ its constant value. */
