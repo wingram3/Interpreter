@@ -37,6 +37,7 @@ typedef enum {
     OP_NOT,
     OP_NOT_EQUAL,
     OP_NEGATE,
+    OP_LOOP,
     OP_JUMP,
     OP_JUMP_IF_TRUE,
     OP_JUMP_IF_FALSE,

@@ -89,6 +89,8 @@ int disassemble_instruction(Chunk *chunk, int offset)
             return simple_instruction("OP_NOT_EQUAL", offset);
         case OP_NEGATE:
             return simple_instruction("OP_NEGATE", offset);
+        case OP_LOOP:
+            return jump_instruction("OP_LOOP", -1, chunk, offset);
         case OP_JUMP:
             return jump_instruction("OP_JUMP", 1, chunk, offset);
         case OP_JUMP_IF_TRUE:

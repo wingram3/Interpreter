@@ -159,10 +159,22 @@ static void emit_bytes(int first_byte, ...)
     va_end(args);
 }
 
-/* emit_jump:  */
+/* emit_loop:  */
+static void emit_loop(int loop_start)
+{
+    emit_byte(OP_LOOP);
+
+    int offset = current_chunk()->count - loop_start + 2;
+    if (offset > UINT16_MAX) error("Loop body too large.");
+
+    emit_byte((offset >> 8) & 0xff);
+    emit_byte(offset & 0xff);
+}
+
+/* emit_jump: emit jump instruction and placeholder operand, return offset. */
 static int emit_jump(int instruction)
 {
-    emit_bytes(instruction, 0xFF, 0xFF, -1);    // Emit instruction and placeholder operand.
+    emit_bytes(instruction, 0xFF, 0xFF, -1);    //
     return current_chunk()->count - 2;
 }
 
@@ -631,6 +643,54 @@ static void expression_statement()
     emit_byte(OP_POP);
 }
 
+/* for_statement: forStmt  → "for" "(" ( varDecl | exprStmt | ";" )
+                           expression? ";"
+                           expression? ")" statement ; */
+static void for_statement()
+{
+    begin_scope();
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
+    if (match(TOKEN_SEMICOLON));
+        // No initializer.
+    else if (match(TOKEN_VAR))
+        var_declaration();
+    else
+        expression_statement();
+
+    int loop_start = current_chunk()->count;
+    int exit_jump = -1;
+    if (!match(TOKEN_SEMICOLON)) {
+        expression();
+        consume(TOKEN_SEMICOLON, "Expect ';' after loop condition.");
+
+        // Jump out of the loop if the condition is false.
+        exit_jump = emit_jump(OP_JUMP_IF_FALSE);
+        emit_byte(OP_POP); // Condition.
+    }
+
+    if (!match(TOKEN_RIGHT_PAREN)) {
+        int body_jump = emit_jump(OP_JUMP);             // Jump over increment.
+        int increment_start = current_chunk()->count;
+        expression();                                   // Run the body.
+        emit_byte(OP_POP);
+        consume(TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
+
+        emit_loop(loop_start);
+        loop_start = increment_start;                   // Jump back to increment.
+        patch_jump(body_jump);
+    }
+
+    statement();
+    emit_loop(loop_start);
+
+    if (exit_jump != -1) {
+        patch_jump(exit_jump);
+        emit_byte(OP_POP); // Condition.
+    }
+
+    end_scope();
+}
+
 /* if_statement: ifStmt → "if" "(" expression ")" statement
                  ( "else" statement )? ; */
 static void if_statement()
@@ -659,6 +719,23 @@ static void print_statement()
     expression();
     consume(TOKEN_SEMICOLON, "Expect ';' after value.");
     emit_byte(OP_PRINT);
+}
+
+/* while_statement: whileStmt → "while" "(" expression ")" statement ; */
+static void while_statement()
+{
+    int loop_start = current_chunk()->count;
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
+    expression();
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+
+    int exit_jump = emit_jump(OP_JUMP_IF_FALSE);
+    emit_byte(OP_POP);
+    statement();
+    emit_loop(loop_start);
+
+    patch_jump(exit_jump);
+    emit_byte(OP_POP);
 }
 
 /* synchronize: when in panic mode, skip tokens until statment boundary. */
@@ -703,8 +780,12 @@ static void statement()
 {
     if (match(TOKEN_PRINT)) {
         print_statement();
+    } else if (match(TOKEN_FOR)) {
+        for_statement();
     } else if (match(TOKEN_IF)) {
         if_statement();
+    } else if(match(TOKEN_WHILE)) {
+        while_statement();
     } else if (match(TOKEN_LEFT_BRACE)) {
         begin_scope();
         block();

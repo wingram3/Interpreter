@@ -291,6 +291,11 @@ static InterpretResult run()
                 *(vm.stack_top - 1) = NUMBER_VAL(AS_NUMBER(*(vm.stack_top - 1)) * -1);
                 break;
             }
+            case OP_LOOP: {
+                uint16_t offset = READ_SHORT();
+                vm.ip -= offset;
+                break;
+            }
             case OP_JUMP: {
                 uint16_t offset = READ_SHORT();
                 vm.ip += offset;
