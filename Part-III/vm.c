@@ -311,6 +311,15 @@ static InterpretResult run()
                 if (is_falsey(peek(0))) vm.ip += offset;
                 break;
             }
+            case OP_JUMP_NOT_EQUAL: {
+                uint16_t offset = READ_SHORT();
+                Value case_value = pop();
+                Value switch_value = peek(0);
+                if (!values_equal(switch_value, case_value))
+                    vm.ip += offset;
+                else pop();
+                break;
+            }
             case OP_PRINT: {
                 print_value(pop());
                 printf("\n");

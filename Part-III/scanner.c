@@ -158,24 +158,37 @@ static TokenType identifier_type()
     switch (scanner.start[0]) {
         // Initial letters that correspond to a single keyword.
         case 'a': return check_keyword(1, 2, "nd", TOKEN_AND);
-        case 'c': return check_keyword(1, 4, "lass", TOKEN_CLASS);
+        case 'd': return check_keyword(1, 6, "efault", TOKEN_DEFAULT);
         case 'e': return check_keyword(1, 3, "lse", TOKEN_ELSE);
         case 'i': return check_keyword(1, 1, "f", TOKEN_IF);
         case 'n': return check_keyword(1, 2, "il", TOKEN_NIL);
         case 'o': return check_keyword(1, 1, "r", TOKEN_OR);
         case 'p': return check_keyword(1, 4, "rint", TOKEN_PRINT);
         case 'r': return check_keyword(1, 5, "eturn", TOKEN_RETURN);
-        case 's': return check_keyword(1, 4, "uper", TOKEN_SUPER);
         case 'v': return check_keyword(1, 2, "ar", TOKEN_VAR);
         case 'w': return check_keyword(1, 4, "hile", TOKEN_WHILE);
 
         // Initial letters that correspond to several keywords.
+        case 'c':
+            if (scanner.current - scanner.start > 1)
+                switch (scanner.start[1]) {
+                    case 'a': return check_keyword(2, 2, "se", TOKEN_CASE);
+                    case 'l': return check_keyword(2, 3, "ass", TOKEN_CLASS);
+                }
+            break;
         case 'f':
             if (scanner.current - scanner.start > 1)
                 switch (scanner.start[1]) {
                     case 'a': return check_keyword(2, 3, "lse", TOKEN_FALSE);
                     case 'o': return check_keyword(2, 1, "r", TOKEN_FOR);
                     case 'u': return check_keyword(2, 1, "n", TOKEN_FUN);
+                }
+            break;
+        case 's':
+            if (scanner.current - scanner.start > 1)
+                switch (scanner.start[1]) {
+                    case 'u': return check_keyword(2, 3, "per", TOKEN_SUPER);
+                    case 'w': return check_keyword(2, 4, "itch", TOKEN_SWITCH);
                 }
             break;
         case 't':

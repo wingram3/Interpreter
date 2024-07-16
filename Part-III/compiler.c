@@ -14,6 +14,7 @@
 #endif
 
 #define UINT24_MAX  16777216
+#define MAX_CASES   100
 
 typedef struct {
     Token current;
@@ -738,6 +739,56 @@ static void while_statement()
     emit_byte(OP_POP);
 }
 
+/* switch_statement: switchStmt  → "switch" "(" expression ")"
+                                  "{" switchCase* defaultCase? "}" ;
+                     switchCase  → "case" expression ":" statement* ;
+                     defaultCase → "default" ":" statement* ; */
+static void switch_statement()
+{
+    consume(TOKEN_LEFT_PAREN, "Expect '(' after 'switch'.");
+    expression();   // switch expr - leaves its value on stack.
+    consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
+    consume(TOKEN_LEFT_BRACE, "Expect '{' before case(s).");
+
+    int case_jump_list[MAX_CASES];
+    int case_jump_count = 0;
+    int default_jump = -1;
+
+    while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
+        if (match(TOKEN_CASE)) {
+            expression();
+
+            int next_jump = emit_jump(OP_JUMP_NOT_EQUAL);   // jump to next case.
+
+            emit_byte(OP_POP);
+            consume(TOKEN_COLON, "Expect ':' after case expression.");
+            statement();    // execute case statement if its expr == switch expr.
+
+            int end_jump = emit_jump(OP_JUMP);
+            patch_jump(next_jump);
+
+            case_jump_list[case_jump_count++] = end_jump;
+        }
+
+        if (match(TOKEN_DEFAULT)) {
+            consume(TOKEN_COLON, "Expect ':' after default.");
+            default_jump = emit_jump(OP_JUMP);
+            statement();
+        }
+    }
+    // Patch all jumps to go to the end of the switch statement.
+    for (int i = 0; i < case_jump_count; i++) {
+        patch_jump(case_jump_list[i]);
+    }
+
+    if (default_jump != -1) {
+        patch_jump(default_jump);
+    }
+
+    consume(TOKEN_RIGHT_BRACE, "Expect '}' after switch-case statement.");
+    emit_byte(OP_POP);
+}
+
 /* synchronize: when in panic mode, skip tokens until statment boundary. */
 static void synchronize()
 {
@@ -775,7 +826,7 @@ static void declaration()
 }
 
 /* statement: statement → exprStmt | forStmt | ifStmt | printStmt | returnStmt
-                          | whileStmt | block ; */
+                          | whileStmt | switchStmt | block ; */
 static void statement()
 {
     if (match(TOKEN_PRINT)) {
@@ -786,6 +837,8 @@ static void statement()
         if_statement();
     } else if(match(TOKEN_WHILE)) {
         while_statement();
+    } else if (match(TOKEN_SWITCH)) {
+        switch_statement();
     } else if (match(TOKEN_LEFT_BRACE)) {
         begin_scope();
         block();
