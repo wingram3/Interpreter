@@ -752,15 +752,14 @@ static void switch_statement()
 
     int case_jump_list[MAX_CASES];
     int case_jump_count = 0;
-    int default_jump = -1;
 
     while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
         if (match(TOKEN_CASE)) {
             expression();
 
             int next_jump = emit_jump(OP_JUMP_NOT_EQUAL);   // jump to next case.
-
             emit_byte(OP_POP);
+
             consume(TOKEN_COLON, "Expect ':' after case expression.");
             statement();    // execute case statement if its expr == switch expr.
 
@@ -773,18 +772,13 @@ static void switch_statement()
 
         if (match(TOKEN_DEFAULT)) {
             consume(TOKEN_COLON, "Expect ':' after default.");
-            default_jump = emit_jump(OP_JUMP);
             statement();
         }
     }
-    // Patch all jumps to go to the end of the switch statement.
-    for (int i = 0; i < case_jump_count; i++) {
-        patch_jump(case_jump_list[i]);
-    }
 
-    if (default_jump != -1) {
-        patch_jump(default_jump);
-    }
+    // Patch all jumps to go to the end of the switch statement.
+    for (int i = 0; i < case_jump_count; i++)
+        patch_jump(case_jump_list[i]);
 
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after switch-case statement.");
     emit_byte(OP_POP);
