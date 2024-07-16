@@ -768,6 +768,7 @@ static void switch_statement()
             patch_jump(next_jump);
 
             case_jump_list[case_jump_count++] = end_jump;
+            if (case_jump_count == MAX_CASES) error("Too many cases in switch statement.");
         }
 
         if (match(TOKEN_DEFAULT)) {
