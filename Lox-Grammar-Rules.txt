@@ -37,6 +37,7 @@ switchStmt     → "switch" "(" expression ")"
                  "{" switchCase* defaultCase? "}" ;
   switchCase   → "case" expression ":" statement* ;
   defaultCase  → "default" ":" statement* ;
+continueStmt   → "continue" ";" ;
 printStmt      → "print" expression ";" ;
 returnStmt     → "return" expression? ";" ;
 whileStmt      → "while" "(" expression ")" statement ;

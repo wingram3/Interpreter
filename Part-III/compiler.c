@@ -16,6 +16,10 @@
 #define UINT24_MAX  16777216
 #define MAX_CASES   100
 
+/* Global variable to track the current loop's
+   increment or start position (for continue stmt). */
+int current_continue_jump = -1;
+
 typedef struct {
     Token current;
     Token previous;
@@ -668,16 +672,19 @@ static void for_statement()
     }
 
     if (!match(TOKEN_RIGHT_PAREN)) {
-        int body_jump = emit_jump(OP_JUMP);             // Jump over increment.
+        int body_jump = emit_jump(OP_JUMP);
         int increment_start = current_chunk()->count;
-        expression();                                   // Run the body.
+        expression();
         emit_byte(OP_POP);
         consume(TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
 
         emit_loop(loop_start);
-        loop_start = increment_start;                   // Jump back to increment.
+        loop_start = increment_start;
         patch_jump(body_jump);
     }
+
+    // For continue statement to jump to start of increment if present.
+    current_continue_jump = loop_start;
 
     statement();
     emit_loop(loop_start);
@@ -724,17 +731,32 @@ static void print_statement()
 static void while_statement()
 {
     int loop_start = current_chunk()->count;
+
+    // For continue statement to jump to beginning of loop.
+    current_continue_jump = loop_start;
+
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
     expression();
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
 
     int exit_jump = emit_jump(OP_JUMP_IF_FALSE);
-    emit_byte(OP_POP);
-    statement();
-    emit_loop(loop_start);
+    emit_byte(OP_POP);  // Condition.
 
+    statement();
+
+    emit_loop(loop_start);
     patch_jump(exit_jump);
-    emit_byte(OP_POP);
+    emit_byte(OP_POP);  // Condition.
+}
+
+/* continue_statement: continueStmt → "continue" ";" ; */
+static void continue_statement()
+{
+    if (current_continue_jump != -1)
+        emit_loop(current_continue_jump);
+    else
+        error("`continue` statement not within a loop.");
+    consume(TOKEN_SEMICOLON, "Expect ';' after 'continue'.");
 }
 
 /* switch_statement: switchStmt  → "switch" "(" expression ")"
@@ -832,6 +854,8 @@ static void statement()
         while_statement();
     } else if (match(TOKEN_SWITCH)) {
         switch_statement();
+    } else if (match(TOKEN_CONTINUE)) {
+        continue_statement();
     } else if (match(TOKEN_LEFT_BRACE)) {
         begin_scope();
         block();
