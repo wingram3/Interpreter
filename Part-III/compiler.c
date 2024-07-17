@@ -449,7 +449,7 @@ static void ternary(bool can_assign)
 {
     int else_jump = emit_jump(OP_JUMP_IF_FALSE);
     emit_byte(OP_POP);  // Pop the condition expression's value from the stack.
-    expression();       // Then expression.
+    parse_precedence(PREC_TERNARY);
 
     int end_jump = emit_jump(OP_JUMP);
     patch_jump(else_jump);
