@@ -334,7 +334,30 @@ static InterpretResult run()
                 break;
             }
             case OP_TEDDY: {
-                printf("WOOF\n");
+                printf("\t\t\tTeddy the yellow lab, so bright and fair,\n\
+                        With fur as golden as the sun's own glare,\n\
+                        He bounds through fields, a joyful sight,\n\
+                        In morning's dawn and twilight's light.\n\
+                        \n\
+                        His eyes, they sparkle, deep and true,\n\
+                        Reflecting skies of azure hue,\n\
+                        A wagging tail, a heart so free,\n\
+                        Teddy's the best friend there could be.\n\
+                        \n\
+                        Through autumn leaves and winter snow,\n\
+                        In springtime's bloom and summer's glow,\n\
+                        He leaps and plays with boundless cheer,\n\
+                        Spreading joy to all who are near.\n\
+                        \n\
+                        A faithful companion, always there,\n\
+                        With a loving gaze and a gentle stare,\n\
+                        In every bark, in every bound,\n\
+                        The truest friend that can be found.\n\
+                        \n\
+                        So here's to Teddy, the yellow lab,\n\
+                        With a heart as vast as the ocean's ebb,\n\
+                        May his days be filled with endless play,\n\
+                        And his nights be warm, till break of day.\n\n");
             }
             case OP_RETURN: {
                 return INTERPRET_OK;
