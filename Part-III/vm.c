@@ -333,6 +333,9 @@ static InterpretResult run()
                 printf("\n");
                 break;
             }
+            case OP_TEDDY: {
+                printf("WOOF\n");
+            }
             case OP_RETURN: {
                 return INTERPRET_OK;
             }
