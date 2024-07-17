@@ -443,8 +443,6 @@ static void literal(bool can_assign)
 /* ternary: function for compiling ternary (conditional) expressions. */
 static void ternary(bool can_assign)
 {
-    // Condition expression's value is already on the stack by now.
-
     int else_jump = emit_jump(OP_JUMP_IF_FALSE);
     emit_byte(OP_POP);
     expression();       // Then expression.
