@@ -444,13 +444,13 @@ static void literal(bool can_assign)
 static void ternary(bool can_assign)
 {
     int else_jump = emit_jump(OP_JUMP_IF_FALSE);
-    emit_byte(OP_POP);
+    emit_byte(OP_POP);  // Pop the condition expression's value from the stack.
     expression();       // Then expression.
 
     int end_jump = emit_jump(OP_JUMP);
     patch_jump(else_jump);
 
-    emit_byte(OP_POP);
+    emit_byte(OP_POP);  // Pop the condition expression's value from the stack.
 
     consume(TOKEN_COLON, "Expect ':' after then branch of ternary expression.");
     expression();       // Else expression.
@@ -700,13 +700,13 @@ static void if_statement()
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
 
     int then_jump = emit_jump(OP_JUMP_IF_FALSE);
-    emit_byte(OP_POP);
-    statement();    // Then statement.
+    emit_byte(OP_POP);  // Pop the condition expression's value from the stack.
+    statement();        // Then statement.
 
     int else_jump = emit_jump(OP_JUMP);
 
     patch_jump(then_jump);
-    emit_byte(OP_POP);
+    emit_byte(OP_POP);  // Pop the condition expression's value from the stack.
 
     if (match(TOKEN_ELSE)) statement();    // Else statement.
     patch_jump(else_jump);

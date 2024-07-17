@@ -81,12 +81,20 @@ static Value peek(int distance)
     return vm.stack_top[-1 - distance];
 }
 
+/* falsey: returns 1 if a value is falsey, 0 otherwise. */
+static int falsey(Value value)
+{
+    return IS_NIL(value) ||
+           AS_NUMBER(value) == 0 ||
+           (IS_BOOL(value) && !AS_BOOL(value)) ? 1 : 0;
+}
+
 /* is_falsey: nil, zero, and false are falsey, everything else behaves like true. */
 static bool is_falsey(Value value)
 {
     return IS_NIL(value) ||
-    AS_NUMBER(value) == 0 ||
-    (IS_BOOL(value) && !AS_BOOL(value));
+           AS_NUMBER(value) == 0 ||
+           (IS_BOOL(value) && !AS_BOOL(value));
 }
 
 /* concatenate: concatencate two string objects. */
@@ -303,12 +311,12 @@ static InterpretResult run()
             }
             case OP_JUMP_IF_TRUE: {
                 uint16_t offset = READ_SHORT();
-                if (!is_falsey(peek(0))) vm.ip += offset;
+                vm.ip += !falsey(*(vm.stack_top - 1)) * offset;
                 break;
             }
             case OP_JUMP_IF_FALSE: {
                 uint16_t offset = READ_SHORT();
-                if (is_falsey(peek(0))) vm.ip += offset;
+                vm.ip += falsey(*(vm.stack_top - 1)) * offset;
                 break;
             }
             case OP_JUMP_NOT_EQUAL: {
