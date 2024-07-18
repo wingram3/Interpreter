@@ -16,9 +16,10 @@
 #define UINT24_MAX  16777216
 #define MAX_CASES   100
 
-/* Global variable to track the current loop's
-   increment or start position (for continue stmt). */
+/* Constants for continue and break statements
+   to jump to the right places. */
 int current_continue_jump = -1;
+int current_exit_jump = -1;
 
 typedef struct {
     Token current;
@@ -164,7 +165,7 @@ static void emit_bytes(int first_byte, ...)
     va_end(args);
 }
 
-/* emit_loop:  */
+/* emit_loop: jump back to the start of a loop. */
 static void emit_loop(int loop_start)
 {
     emit_byte(OP_LOOP);
@@ -172,14 +173,26 @@ static void emit_loop(int loop_start)
     int offset = current_chunk()->count - loop_start + 2;
     if (offset > UINT16_MAX) error("Loop body too large.");
 
-    emit_byte((offset >> 8) & 0xff);
-    emit_byte(offset & 0xff);
+    emit_byte((offset >> 8) & 0xFF);
+    emit_byte(offset & 0xFF);
+}
+
+/* emit_break: immediately jump past the end of a loop. */
+static void emit_break(int loop_end)
+{
+    emit_byte(OP_JUMP);
+
+    int offset = current_chunk()->count - loop_end + 2;
+    if (offset > UINT16_MAX) error("Too far to jump.");
+
+    emit_byte((offset >> 8) & 0xFF);
+    emit_byte(offset & 0xFF);
 }
 
 /* emit_jump: emit jump instruction and placeholder operand, return offset. */
 static int emit_jump(int instruction)
 {
-    emit_bytes(instruction, 0xFF, 0xFF, -1);    //
+    emit_bytes(instruction, 0xFF, 0xFF, -1);
     return current_chunk()->count - 2;
 }
 
@@ -449,7 +462,7 @@ static void ternary(bool can_assign)
 {
     int else_jump = emit_jump(OP_JUMP_IF_FALSE);
     emit_byte(OP_POP);  // Pop the condition expression's value from the stack.
-    parse_precedence(PREC_TERNARY);
+    parse_precedence(PREC_TERNARY);    // Then expression.
 
     int end_jump = emit_jump(OP_JUMP);
     patch_jump(else_jump);
@@ -457,7 +470,7 @@ static void ternary(bool can_assign)
     emit_byte(OP_POP);  // Pop the condition expression's value from the stack.
 
     consume(TOKEN_COLON, "Expect ':' after then branch of ternary expression.");
-    expression();       // Else expression.
+    expression();    // Else expression.
 
     patch_jump(end_jump);
 }
@@ -647,8 +660,8 @@ static void expression_statement()
 }
 
 /* for_statement: forStmt  → "for" "(" ( varDecl | exprStmt | ";" )
-                           expression? ";"
-                           expression? ")" statement ; */
+                             expression? ";"
+                             expression? ")" statement ; */
 static void for_statement()
 {
     begin_scope();
@@ -695,6 +708,9 @@ static void for_statement()
     }
 
     end_scope();
+
+    // Reset jump label for continue.
+    current_continue_jump = -1;
 }
 
 /* if_statement: ifStmt → "if" "(" expression ")" statement
@@ -740,27 +756,46 @@ static void while_statement()
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
 
     int exit_jump = emit_jump(OP_JUMP_IF_FALSE);
-    emit_byte(OP_POP);  // Condition.
+
+    // For break statement to jump past the end of loop.
+    current_exit_jump = exit_jump;
+
+    emit_byte(OP_POP);    // Condition.
 
     statement();
 
     emit_loop(loop_start);
     patch_jump(exit_jump);
-    emit_byte(OP_POP);  // Condition.
+    emit_byte(OP_POP);    // Condition.
+
+    // Reset jump labels for continue and break.
+    current_continue_jump = -1;
+    current_exit_jump = -1;
 }
 
 /* continue_statement: continueStmt → "continue" ";" ; */
 static void continue_statement()
 {
+    // Jump to top of nearest enclosing loop.
     if (current_continue_jump != -1)
         emit_loop(current_continue_jump);
     else
-        error("`continue` statement not within a loop.");
+        error("'continue' statement not within a loop.");
     consume(TOKEN_SEMICOLON, "Expect ';' after 'continue'.");
 }
 
+/* break_statement: break → "break" ";" ; */
+static void break_statement()
+{
+    if (current_exit_jump != -1) {
+        emit_break(current_exit_jump);
+    } else
+        error("'break' statement not within a while loop.");
+    consume(TOKEN_SEMICOLON, "Expect ';' after 'break'.");
+}
+
 /* switch_statement: switchStmt  → "switch" "(" expression ")"
-                                  "{" switchCase* defaultCase? "}" ;
+                                   "{" switchCase* defaultCase? "}" ;
                      switchCase  → "case" expression ":" statement* ;
                      defaultCase → "default" ":" statement* ; */
 static void switch_statement()
@@ -863,6 +898,8 @@ static void statement()
         switch_statement();
     } else if (match(TOKEN_CONTINUE)) {
         continue_statement();
+    } else if (match(TOKEN_BREAK)) {
+        break_statement();
     } else if (match(TOKEN_TEDDY)) {
         teddy_statement();
     } else if (match(TOKEN_LEFT_BRACE)) {

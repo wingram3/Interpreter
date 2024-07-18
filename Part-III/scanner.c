@@ -167,6 +167,7 @@ static TokenType identifier_type()
         case 'r': return check_keyword(1, 5, "eturn", TOKEN_RETURN);
         case 'v': return check_keyword(1, 2, "ar", TOKEN_VAR);
         case 'w': return check_keyword(1, 4, "hile", TOKEN_WHILE);
+        case 'b': return check_keyword(1, 4, "reak", TOKEN_BREAK);
 
         // Initial letters that correspond to several keywords.
         case 'c':
