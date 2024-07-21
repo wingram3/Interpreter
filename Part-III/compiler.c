@@ -16,13 +16,11 @@
 #define UINT24_MAX  16777216
 #define MAX_CASES   100
 
-/* Constants for continue and break statements
-   to jump to the right places. */
+/* Constants for continue and break statements. */
 int current_continue_jump = -1;
 int current_exit_jump = -1;
 int loop_depth = 0;
 bool break_flag = false;
-
 
 typedef struct {
     Token current;
