@@ -20,6 +20,9 @@
    to jump to the right places. */
 int current_continue_jump = -1;
 int current_exit_jump = -1;
+int loop_depth = 0;
+bool break_flag = false;
+
 
 typedef struct {
     Token current;
@@ -172,18 +175,6 @@ static void emit_loop(int loop_start)
 
     int offset = current_chunk()->count - loop_start + 2;
     if (offset > UINT16_MAX) error("Loop body too large.");
-
-    emit_byte((offset >> 8) & 0xFF);
-    emit_byte(offset & 0xFF);
-}
-
-/* emit_break: immediately jump past the end of a loop. */
-static void emit_break(int loop_end)
-{
-    emit_byte(OP_JUMP);
-
-    int offset = current_chunk()->count - loop_end + 2;
-    if (offset > UINT16_MAX) error("Too far to jump.");
 
     emit_byte((offset >> 8) & 0xFF);
     emit_byte(offset & 0xFF);
@@ -665,6 +656,8 @@ static void expression_statement()
 static void for_statement()
 {
     begin_scope();
+    loop_depth++;
+
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
     if (match(TOKEN_SEMICOLON));
         // No initializer.
@@ -707,10 +700,15 @@ static void for_statement()
         emit_byte(OP_POP); // Condition.
     }
 
+    if (break_flag) patch_jump(current_exit_jump);
+
     end_scope();
 
-    // Reset jump label for continue.
+    // Reset jump label for continue, label and flag for break.
     current_continue_jump = -1;
+    current_exit_jump = -1;
+    break_flag = false;
+    loop_depth--;
 }
 
 /* if_statement: ifStmt → "if" "(" expression ")" statement
@@ -746,6 +744,7 @@ static void print_statement()
 /* while_statement: whileStmt → "while" "(" expression ")" statement ; */
 static void while_statement()
 {
+    loop_depth++;
     int loop_start = current_chunk()->count;
 
     // For continue statement to jump to beginning of loop.
@@ -757,20 +756,21 @@ static void while_statement()
 
     int exit_jump = emit_jump(OP_JUMP_IF_FALSE);
 
-    // For break statement to jump past the end of loop.
-    current_exit_jump = exit_jump;
-
     emit_byte(OP_POP);    // Condition.
 
     statement();
-
     emit_loop(loop_start);
+
     patch_jump(exit_jump);
     emit_byte(OP_POP);    // Condition.
 
-    // Reset jump labels for continue and break.
+    if (break_flag) patch_jump(current_exit_jump);
+
+    // Reset jump label for continue, label and flag for break.
     current_continue_jump = -1;
     current_exit_jump = -1;
+    break_flag = false;
+    loop_depth--;
 }
 
 /* continue_statement: continueStmt → "continue" ";" ; */
@@ -784,13 +784,15 @@ static void continue_statement()
     consume(TOKEN_SEMICOLON, "Expect ';' after 'continue'.");
 }
 
-/* break_statement: break → "break" ";" ; */
+/* break_statement: breakStmt → "break" ";" ; */
 static void break_statement()
 {
-    if (current_exit_jump != -1) {
-        emit_break(current_exit_jump);
-    } else
-        error("'break' statement not within a while loop.");
+    if (loop_depth == 0) {
+        error("'Break' statement not within a loop.");
+        return;
+    }
+    break_flag = true;
+    current_exit_jump = emit_jump(OP_JUMP);
     consume(TOKEN_SEMICOLON, "Expect ';' after 'break'.");
 }
 
