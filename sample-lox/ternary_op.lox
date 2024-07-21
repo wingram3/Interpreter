@@ -1,0 +1,3 @@
+var name = "will";
+
+print name == "teddy" ? "woof" : 123 + 456;

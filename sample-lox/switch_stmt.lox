@@ -1,0 +1,10 @@
+var name = "teddy";
+
+switch (name) {
+    case "tebbis": print 1;
+    case "bepis" : print 2;
+    case "holly" : print 3;
+    case "abbey" : print 4;
+    case "teddy" : print "woof";
+    default: print "nah";
+}
