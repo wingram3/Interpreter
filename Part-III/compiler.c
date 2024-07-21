@@ -560,7 +560,7 @@ static void unary(bool can_assign)
 }
 
 /* Table of function pointers. */
-ParseRule rules[] = {     /* prefix    infix      precedence */
+ParseRule rules[] = {        /* prefix    infix      precedence */
     [TOKEN_LEFT_PAREN]       = {grouping, NULL,      PREC_NONE},
     [TOKEN_RIGHT_PAREN]      = {NULL,     NULL,      PREC_NONE},
     [TOKEN_LEFT_BRACE]       = {NULL,     NULL,      PREC_NONE},
@@ -786,7 +786,7 @@ static void continue_statement()
 static void break_statement()
 {
     if (loop_depth == 0) {
-        error("'Break' statement not within a loop.");
+        error("'break' statement not within a loop.");
         return;
     }
     break_flag = true;
@@ -883,7 +883,8 @@ static void declaration()
 }
 
 /* statement: statement → exprStmt | forStmt | ifStmt | printStmt | returnStmt
-                          | whileStmt | switchStmt | block ; */
+                          | whileStmt | switchStmt | continueStmt | breakStmt
+                          | teddyStmt | block ; */
 static void statement()
 {
     if (match(TOKEN_PRINT)) {

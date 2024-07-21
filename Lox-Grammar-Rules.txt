@@ -19,13 +19,17 @@ varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
 
 STATEMENTS:
 
-statement      → exprStmt
-               | forStmt
-               | ifStmt
-               | printStmt
-               | returnStmt
-               | whileStmt
-               | block ;
+statement      → exprStmt     |
+                 forStmt      |
+                 ifStmt       |
+                 printStmt    |
+                 returnStmt   |
+                 whileStmt    |
+                 switchStmt   |
+                 continueStmt |
+                 breakStmt    |
+                 teddyStmt    |
+                 block ; */
 
 exprStmt       → expression ";" ;
 forStmt        → "for" "(" ( varDecl | exprStmt | ";" )
