@@ -516,6 +516,7 @@ static void string(bool can_assign)
                    the chunk’s constant table as a string. */
 static void named_variable(Token name, bool can_assign)
 {
+    // Determine proper get/set instruction.
     uint8_t get_op, set_op;
     int arg = resolve_local(current, &name);
     if (arg != -1) {
@@ -532,20 +533,25 @@ static void named_variable(Token name, bool can_assign)
         }
     }
 
+    // Check for assignment operator.
     if (can_assign && (check(TOKEN_EQUAL) || check(TOKEN_PLUS_EQUAL) || check(TOKEN_MINUS_EQUAL) ||
                        check(TOKEN_STAR_EQUAL) || check(TOKEN_SLASH_EQUAL))) {
         TokenType operator_type = parser.current.type;
         advance();
 
         if (operator_type != TOKEN_EQUAL) {
+            // Put the value of the var being assigned to on the stack.
             if (get_op == OP_GET_GLOBAL_LONG) {
                 emit_byte(get_op);
                 emit_constant_24bit(arg);
             } else {
                 emit_bytes(get_op, arg, -1);
             }
+
+            // Get the value of the expression and put it on the stack.
             expression();
 
+            // Perform the proper arithmetic operation on the top two stack values.
             switch (operator_type) {
                 case TOKEN_PLUS_EQUAL:  emit_byte(OP_ADD); break;
                 case TOKEN_MINUS_EQUAL: emit_byte(OP_SUBTRACT); break;
@@ -553,7 +559,10 @@ static void named_variable(Token name, bool can_assign)
                 case TOKEN_SLASH_EQUAL: emit_byte(OP_DIVIDE); break;
                 default: break;
             }
-        } else expression();
+        } else {
+            // Get the value of the expression and put it on the stack.
+            expression();
+        }
 
         // Store the result back into the variable.
         if (set_op == OP_SET_GLOBAL_LONG) {
@@ -563,6 +572,7 @@ static void named_variable(Token name, bool can_assign)
             emit_bytes(set_op, arg, -1);
         }
     } else {
+        // Retrieve the value of a named variable.
         if (get_op == OP_GET_GLOBAL_LONG) {
             emit_byte(get_op);
             emit_constant_24bit(arg);
