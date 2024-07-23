@@ -81,8 +81,9 @@ ObjString *copy_string(const char *chars, int length)
 void print_object(Value value)
 {
     switch (OBJ_TYPE(value)) {
-        case OBJ_STRING:
-        printf("%s", AS_CSTRING(value));
-        break;
+        case OBJ_STRING: {
+            printf("%s", AS_CSTRING(value));
+            break;
+        }
     }
 }
