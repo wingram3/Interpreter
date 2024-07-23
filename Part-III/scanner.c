@@ -198,7 +198,6 @@ static TokenType identifier_type()
                 switch (scanner.start[1]) {
                     case 'h': return check_keyword(2, 2, "is", TOKEN_THIS);
                     case 'r': return check_keyword(2, 2, "ue", TOKEN_TRUE);
-                    case 'e': return check_keyword(2, 3, "ddy", TOKEN_TEDDY);
                 }
             break;
     }

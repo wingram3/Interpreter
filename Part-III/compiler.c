@@ -881,13 +881,6 @@ static void switch_statement()
     emit_byte(OP_POP);
 }
 
-/* teddy_statement: teddyStmt → "teddy" ";" ; */
-static void teddy_statement()
-{
-    consume(TOKEN_SEMICOLON, "Expect ';' after teddy statement.");
-    emit_byte(OP_TEDDY);
-}
-
 /* synchronize: when in panic mode, skip tokens until statment boundary. */
 static void synchronize()
 {
@@ -943,8 +936,6 @@ static void statement()
         continue_statement();
     } else if (match(TOKEN_BREAK)) {
         break_statement();
-    } else if (match(TOKEN_TEDDY)) {
-        teddy_statement();
     } else if (match(TOKEN_LEFT_BRACE)) {
         begin_scope();
         block();
