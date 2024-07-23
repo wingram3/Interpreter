@@ -516,15 +516,47 @@ static void string(bool can_assign)
                    the chunk’s constant table as a string. */
 static void named_variable(Token name, bool can_assign)
 {
+    uint8_t get_op, set_op;
     int arg = resolve_local(current, &name);
-    uint8_t get_op = (arg != -1) ? OP_GET_LOCAL : (arg < 256 ? OP_GET_GLOBAL : OP_GET_GLOBAL_LONG);
-    uint8_t set_op = (arg != -1) ? OP_SET_LOCAL : (arg < 256 ? OP_SET_GLOBAL : OP_SET_GLOBAL_LONG);
+    if (arg != -1) {
+        get_op = OP_GET_LOCAL;
+        set_op = OP_SET_LOCAL;
+    } else {
+        arg = identifier_constant(&name);
+        if (arg < 256) {
+            get_op = OP_GET_GLOBAL;
+            set_op = OP_SET_GLOBAL;
+        } else {
+            get_op = OP_GET_GLOBAL_LONG;
+            set_op = OP_SET_GLOBAL_LONG;
+        }
+    }
 
-    if (arg == -1) arg = identifier_constant(&name);    // Global variable.
+    if (can_assign && (check(TOKEN_EQUAL) || check(TOKEN_PLUS_EQUAL) || check(TOKEN_MINUS_EQUAL) ||
+                       check(TOKEN_STAR_EQUAL) || check(TOKEN_SLASH_EQUAL))) {
+        TokenType operator_type = parser.current.type;
+        advance();
 
-    if (can_assign && match(TOKEN_EQUAL)) {
-        expression();
-        if (get_op == OP_SET_GLOBAL_LONG) {
+        if (operator_type != TOKEN_EQUAL) {
+            if (get_op == OP_GET_GLOBAL_LONG) {
+                emit_byte(get_op);
+                emit_constant_24bit(arg);
+            } else {
+                emit_bytes(get_op, arg, -1);
+            }
+            expression();
+
+            switch (operator_type) {
+                case TOKEN_PLUS_EQUAL:  emit_byte(OP_ADD); break;
+                case TOKEN_MINUS_EQUAL: emit_byte(OP_SUBTRACT); break;
+                case TOKEN_STAR_EQUAL:  emit_byte(OP_MULTIPLY); break;
+                case TOKEN_SLASH_EQUAL: emit_byte(OP_DIVIDE); break;
+                default: break;
+            }
+        } else expression();
+
+        // Store the result back into the variable.
+        if (set_op == OP_SET_GLOBAL_LONG) {
             emit_byte(set_op);
             emit_constant_24bit(arg);
         } else {
