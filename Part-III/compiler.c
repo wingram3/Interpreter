@@ -440,8 +440,8 @@ static void literal(bool can_assign)
 {
     switch (parser.previous.type) {
         case TOKEN_FALSE: emit_byte(OP_FALSE); break;
-        case TOKEN_NIL: emit_byte(OP_NIL); break;
-        case TOKEN_TRUE: emit_byte(OP_TRUE); break;
+        case TOKEN_NIL:   emit_byte(OP_NIL); break;
+        case TOKEN_TRUE:  emit_byte(OP_TRUE); break;
         default: return;
     }
 }
@@ -898,7 +898,6 @@ static void synchronize()
             case TOKEN_PRINT:
             case TOKEN_RETURN:
             return;
-
             default:
                 ; // Do nothing.
         }
@@ -922,27 +921,26 @@ static void declaration()
                           | teddyStmt | block ; */
 static void statement()
 {
-    if (match(TOKEN_PRINT)) {
+    if (match(TOKEN_PRINT))
         print_statement();
-    } else if (match(TOKEN_FOR)) {
+    else if (match(TOKEN_FOR))
         for_statement();
-    } else if (match(TOKEN_IF)) {
+    else if (match(TOKEN_IF))
         if_statement();
-    } else if(match(TOKEN_WHILE)) {
+    else if (match(TOKEN_WHILE))
         while_statement();
-    } else if (match(TOKEN_SWITCH)) {
+    else if (match(TOKEN_SWITCH))
         switch_statement();
-    } else if (match(TOKEN_CONTINUE)) {
+    else if (match(TOKEN_CONTINUE))
         continue_statement();
-    } else if (match(TOKEN_BREAK)) {
+    else if (match(TOKEN_BREAK))
         break_statement();
-    } else if (match(TOKEN_LEFT_BRACE)) {
+    else if (match(TOKEN_LEFT_BRACE)) {
         begin_scope();
         block();
         end_scope();
-    } else {
+    } else
         expression_statement();
-    }
 }
 
 /* compile: compile the source text. */
