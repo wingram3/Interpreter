@@ -16,12 +16,6 @@
 #define UINT24_MAX  16777216
 #define MAX_CASES   100
 
-/* Constants for continue and break statements. */
-int current_continue_jump = -1;
-int current_exit_jump = -1;
-int loop_depth = 0;
-bool break_flag = false;
-
 typedef struct {
     Token current;
     Token previous;
@@ -689,6 +683,12 @@ static void expression_statement()
     consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
     emit_byte(OP_POP);
 }
+
+/* Constants for continue and break statements. */
+int current_continue_jump = -1;
+int current_exit_jump = -1;
+int loop_depth = 0;
+bool break_flag = false;
 
 /* for_statement: forStmt  → "for" "(" ( varDecl | exprStmt | ";" )
                              expression? ";"
