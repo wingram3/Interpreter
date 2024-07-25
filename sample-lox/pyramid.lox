@@ -1,0 +1,16 @@
+// Prints a pyramix of hashes (#).
+
+var height = 70;
+for (var i = 0; i < height; i += 1) {
+    var spaces = "";
+    for (var j = 0; j < height - i - 1; j += 1) {
+        spaces += " ";
+    }
+
+    var hashes = "";
+    for (var k = 0; k < 2 * i + 1; k += 1) {
+        hashes += "#";
+    }
+
+    print spaces + hashes;
+}
