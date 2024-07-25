@@ -159,6 +159,7 @@ static InterpretResult run()
     // Instruction decoding.
     for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
+        // Print stack trace for debugging.
         printf("            ");
         for (Value *slot = vm.stack; slot < vm.stack_top; slot++) {
             printf("[ ");
@@ -170,28 +171,40 @@ static InterpretResult run()
 
         uint8_t instruction;
         switch (instruction = READ_BYTE()) {
+            // Read a constant from constant pool, put it on stack.
             case OP_CONSTANT: {
                 Value constant = READ_CONSTANT();
                 push(constant);
                 break;
             }
+            // Read a 24-bit constant from constant pool, put it on stack.
             case OP_CONSTANT_LONG: {
                 Value constant = READ_CONSTANT_LONG();
                 push(constant);
                 break;
             }
+            // Special push instructions for 1, 2, and 3.
             case OP_ZERO:  push(NUMBER_VAL(0.0)); break;
             case OP_ONE:   push(NUMBER_VAL(1.0)); break;
             case OP_TWO:   push(NUMBER_VAL(2.0)); break;
+
+            // Push nil (null) on to the stack.
             case OP_NIL:   push(NIL_VAL); break;
+
+            // Push true and false on to the stack.
             case OP_TRUE:  push(BOOL_VAL(true)); break;
             case OP_FALSE: push(BOOL_VAL(false)); break;
+
+            // Pop a value from the stack.
             case OP_POP:   pop(); break;
+
+            // Pop multiple values, for when several local vars go out of scope at once.
             case OP_POPN: {
                 int count = READ_BYTE();
                 while (count-- > 0) pop();
                 break;
             }
+            // Get a global from globals hash table, put it on stack.
             case OP_GET_GLOBAL: {
                 ObjString *name = READ_STRING();
                 Value value;
@@ -202,6 +215,7 @@ static InterpretResult run()
                 push(value);
                 break;
             }
+            // Get a 24-bit global from globals hash table, put it on stack.
             case OP_GET_GLOBAL_LONG: {
                 ObjString *name = READ_STRING_LONG();
                 Value value;
@@ -212,6 +226,7 @@ static InterpretResult run()
                 push(value);
                 break;
             }
+            // Store the top stack value into globals hash table according to its key.
             case OP_SET_GLOBAL: {
                 ObjString *name = READ_STRING();
                 if (table_set(&vm.globals, name, peek(0))) {
@@ -221,6 +236,7 @@ static InterpretResult run()
                 }
                 break;
             }
+            // Store the top stack value (24-bit) into globals hash table according to its key.
             case OP_SET_GLOBAL_LONG: {
                 ObjString *name = READ_STRING_LONG();
                 if (table_set(&vm.globals, name, peek(0))) {
@@ -230,28 +246,33 @@ static InterpretResult run()
                 }
                 break;
             }
+            // Push a local variable's value on to the stack.
             case OP_GET_LOCAL: {
                 uint8_t slot = READ_BYTE();
                 push(vm.stack[slot]);
                 break;
             }
+            // Store a local, the value on top of stack becomes the local's value.
             case OP_SET_LOCAL: {
                 uint8_t slot = READ_BYTE();
                 vm.stack[slot] = peek(0);
                 break;
             }
+            // Define a global variable. Put its key and value in globals hash table.
             case OP_DEFINE_GLOBAL: {
                 ObjString *name = READ_STRING();
                 table_set(&vm.globals, name, peek(0));
                 pop();
                 break;
             }
+            // Define a 24-bit global variable. Put its key and value in globals hash table.
             case OP_DEFINE_GLOBAL_LONG: {
                 ObjString *name = READ_STRING_LONG();
                 table_set(&vm.globals, name, peek(0));
                 pop();
                 break;
             }
+            // Check if top two stack values are equal, push true or false accordingly.
             case OP_EQUAL: {
                 *(vm.stack_top - 2) = BOOL_VAL(
                     values_equal(*(vm.stack_top - 2), *(vm.stack_top - 1))
@@ -259,6 +280,7 @@ static InterpretResult run()
                 vm.stack_top--;
                 break;
             }
+            // Opposite of OP_EQUAL.
             case OP_NOT_EQUAL: {
                 *(vm.stack_top - 2) = BOOL_VAL(
                     !values_equal(*(vm.stack_top - 2), *(vm.stack_top - 1))
@@ -266,10 +288,13 @@ static InterpretResult run()
                 vm.stack_top--;
                 break;
             }
+            // Binary operations for comparision between numbers.
             case OP_GREATER:        BINARY_OP(BOOL_VAL, >); break;
             case OP_GREATER_EQUAL:  BINARY_OP(BOOL_VAL, >=); break;
             case OP_LESS:           BINARY_OP(BOOL_VAL, <); break;
             case OP_LESS_EQUAL:     BINARY_OP(BOOL_VAL, <=); break;
+
+            // Add two numbers or concatenate two strings.
             case OP_ADD: {
                 if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
                     concatenate();
@@ -284,13 +309,17 @@ static InterpretResult run()
                 }
                 break;
             }
+            // Binary arithmetic operations for two numbers.
             case OP_SUBTRACT:       BINARY_OP(NUMBER_VAL, -); break;
             case OP_MULTIPLY:       BINARY_OP(NUMBER_VAL, *); break;
             case OP_DIVIDE:         BINARY_OP(NUMBER_VAL, /); break;
+
+            // Unary invert operation. Effectively pushes opposite of stack top's bool value.
             case OP_NOT: {
                 *(vm.stack_top - 1) = BOOL_VAL(is_falsey(*(vm.stack_top - 1)));
                 break;
             }
+            // Unary negate operation.
             case OP_NEGATE: {
                 if (!IS_NUMBER(peek(0))) {
                     runtime_error("Operand must be a number.");
@@ -299,26 +328,31 @@ static InterpretResult run()
                 *(vm.stack_top - 1) = NUMBER_VAL(AS_NUMBER(*(vm.stack_top - 1)) * -1);
                 break;
             }
+            // Jump back to top of loop.
             case OP_LOOP: {
                 uint16_t offset = READ_SHORT();
                 vm.ip -= offset;
                 break;
             }
+            // Unconditional jump instruction.
             case OP_JUMP: {
                 uint16_t offset = READ_SHORT();
                 vm.ip += offset;
                 break;
             }
+            // Jump if stack top evaluates to true.
             case OP_JUMP_IF_TRUE: {
                 uint16_t offset = READ_SHORT();
                 vm.ip += !falsey(*(vm.stack_top - 1)) * offset;
                 break;
             }
+            // Jump if stack top evaluates to false.
             case OP_JUMP_IF_FALSE: {
                 uint16_t offset = READ_SHORT();
                 vm.ip += falsey(*(vm.stack_top - 1)) * offset;
                 break;
             }
+            // Jump if top two stack values are not equal.
             case OP_JUMP_NOT_EQUAL: {
                 uint16_t offset = READ_SHORT();
                 Value case_value = pop();
@@ -328,11 +362,13 @@ static InterpretResult run()
                 else pop();
                 break;
             }
+            // Print the value on top of stack.
             case OP_PRINT: {
                 print_value(pop());
                 printf("\n");
                 break;
             }
+            // Return instruction.
             case OP_RETURN: {
                 return INTERPRET_OK;
             }
