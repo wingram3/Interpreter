@@ -2,7 +2,6 @@
 #include <string.h>
 
 #include "memory.h"
-#include "object.h"
 #include "table.h"
 #include "value.h"
 

@@ -469,23 +469,10 @@ static void grouping(bool can_assign)
 static void number(bool can_assign)
 {
     double value = strtod(parser.previous.start, NULL);
-
     switch ((int)value) {
-        case 0:
-            if (value == 0.0) {
-                emit_byte(OP_ZERO);
-                break;
-            }
-        case 1:
-            if (value == 1.0) {
-                emit_byte(OP_ONE);
-                break;
-            }
-        case 2:
-            if (value == 2.0) {
-                emit_byte(OP_TWO);
-                break;
-            }
+        case 0: if (value == 0.0) emit_byte(OP_ZERO); break;
+        case 1: if (value == 1.0) emit_byte(OP_ONE); break;
+        case 2: if (value == 2.0) emit_byte(OP_TWO); break;
         default: emit_constant(NUMBER_VAL(value));
     }
 }
@@ -918,29 +905,21 @@ static void declaration()
 
 /* statement: statement → exprStmt | forStmt | ifStmt | printStmt | returnStmt
                           | whileStmt | switchStmt | continueStmt | breakStmt
-                          | teddyStmt | block ; */
+                          | block ; */
 static void statement()
 {
-    if (match(TOKEN_PRINT))
-        print_statement();
-    else if (match(TOKEN_FOR))
-        for_statement();
-    else if (match(TOKEN_IF))
-        if_statement();
-    else if (match(TOKEN_WHILE))
-        while_statement();
-    else if (match(TOKEN_SWITCH))
-        switch_statement();
-    else if (match(TOKEN_CONTINUE))
-        continue_statement();
-    else if (match(TOKEN_BREAK))
-        break_statement();
+    if (match(TOKEN_PRINT)) print_statement();
+    else if (match(TOKEN_FOR)) for_statement();
+    else if (match(TOKEN_IF)) if_statement();
+    else if (match(TOKEN_WHILE)) while_statement();
+    else if (match(TOKEN_SWITCH)) switch_statement();
+    else if (match(TOKEN_CONTINUE)) continue_statement();
+    else if (match(TOKEN_BREAK)) break_statement();
     else if (match(TOKEN_LEFT_BRACE)) {
         begin_scope();
         block();
         end_scope();
-    } else
-        expression_statement();
+    } else expression_statement();
 }
 
 /* compile: compile the source text. */

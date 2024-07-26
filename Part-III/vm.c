@@ -355,9 +355,9 @@ static InterpretResult run()
             // Jump if top two stack values are not equal.
             case OP_JUMP_NOT_EQUAL: {
                 uint16_t offset = READ_SHORT();
-                Value case_value = pop();
-                Value switch_value = peek(0);
-                if (!values_equal(switch_value, case_value))
+                Value first_value = pop();
+                Value second_value = peek(0);
+                if (!values_equal(second_value, first_value))
                     vm.ip += offset;
                 else pop();
                 break;
