@@ -1,14 +1,4 @@
-{
-    var k = 1;
-    k += 2;
-    print k;
-}
-
-var k = 1;
-k += 2;
-print k;
-
-for (var i = 0; i < 5; i += 1) {
-    if (i == 3) continue;
+for (var i = 0; i < 10; i += 1) {
+    if ((i == 3) or (i == 7)) continue;
     print i;
 }
