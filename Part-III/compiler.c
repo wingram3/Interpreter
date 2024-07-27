@@ -440,7 +440,7 @@ static void literal(bool can_assign)
     }
 }
 
-/* ternary: function for compiling ternary (conditional) expressions. */
+/* ternary: ternary → logic_or ( "?" expression ":" expression )? ; */
 static void ternary(bool can_assign)
 {
     int else_jump = emit_jump(OP_JUMP_IF_FALSE);
@@ -685,6 +685,7 @@ static void for_statement()
     begin_scope();
     loop_depth++;
 
+    // Initializer clause.
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
     if (match(TOKEN_SEMICOLON));
         // No initializer.
@@ -693,6 +694,7 @@ static void for_statement()
     else
         expression_statement();
 
+    // Condition clause.
     int loop_start = current_chunk()->count;
     int exit_jump = -1;
     if (!match(TOKEN_SEMICOLON)) {
@@ -704,6 +706,7 @@ static void for_statement()
         emit_byte(OP_POP); // Condition.
     }
 
+    // Increment clause.
     if (!match(TOKEN_RIGHT_PAREN)) {
         int body_jump = emit_jump(OP_JUMP);
         int increment_start = current_chunk()->count;
@@ -727,6 +730,7 @@ static void for_statement()
         emit_byte(OP_POP); // Condition.
     }
 
+    // If break statement present, jump past end of loop.
     if (break_flag) patch_jump(current_exit_jump);
 
     end_scope();
