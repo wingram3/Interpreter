@@ -1,4 +1,4 @@
-// Prints a pyramix of hashes (#).
+// Prints a pyramid of hashes (#).
 
 var height = 70;
 for (var i = 0; i < height; i += 1) {
