@@ -12,6 +12,7 @@
 #include "memory.h"
 #include "value.h"
 #include "vm.h"
+#include "debug.h"
 
 VM vm;  // Single global virtual machine object.
 
@@ -36,13 +37,12 @@ static void runtime_error(const char *format, ...)
         ObjFunction *function = frame->function;
         size_t instruction = frame->ip - function->chunk.code - 1;
         fprintf(stderr, "[line %d] in ",
-            function->chunk.lines.line_number_entries[instruction].line_number);
+            get_line(&function->chunk, instruction));
         if (function->name == NULL)
             fprintf(stderr, "script\n");
         else
             fprintf(stderr, "%s()\n", function->name->chars);
     }
-
     reset_stack();
 }
 
@@ -166,11 +166,6 @@ InterpretResult interpret(const char *source)
     push(OBJ_VAL(function));
     call(function, 0);
 
-    CallFrame *frame = &vm.frames[vm.frame_count++];
-    frame->function = function;
-    frame->ip = function->chunk.code;
-    frame->slots = vm.stack;
-
     return run();
 }
 
@@ -209,8 +204,6 @@ static InterpretResult run()
             printf(" ]");
         }
         printf("\n");
-        disassemble_instruction(&frame->function->chunk,
-            (int)(frame->ip - frame->function->chunk.code));
 #endif
 
         uint8_t instruction;

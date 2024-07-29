@@ -2,7 +2,6 @@
 #define clox_chunk_h
 
 #include "common.h"
-#include "lines.h"
 #include "value.h"
 
 /* One-byte opcode enum. */
@@ -47,12 +46,22 @@ typedef enum {
     OP_RETURN,
 } OpCode;
 
+/* Line run compression - count of instructions on a corresponding line number. */
+typedef struct {
+    int line;   // Line number.
+    int count;  // Number of consecutive instructions on this line.
+} LineRun;
+
 /* Dynamic array structure to hold sequences of bytecode. */
 typedef struct {
     int count;              // number of allocated entries in use.
     int capacity;           // total number of allocated entires.
     uint8_t *code;          // an array of bytes.
-    LineNumberArray lines;  // line numbers - mappings of bytecode offsets to source code line numbers.
+
+    LineRun *line_runs;     // Array of LineRun structs for RLE of line numbers.
+    int line_run_count;     // Number of LineRun entries.
+    int line_run_capacity;  // Total capacity of the line runs array.
+
     ValueArray constants;   // constants associated w/ the chunk.
 } Chunk;
 
@@ -61,6 +70,6 @@ void free_chunk(Chunk *chunk);
 void write_chunk(Chunk *chunk, uint8_t byte, int line);
 void write_constant(Chunk *chunk, Value value, int line);
 int add_constant(Chunk *chunk, Value value);
-void add_line(Chunk *chunk, int line);
+int get_line(Chunk *chunk, int offset);
 
 #endif

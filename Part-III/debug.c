@@ -1,5 +1,6 @@
 #include <stdio.h>
 
+#include "common.h"
 #include "debug.h"
 #include "chunk.h"
 #include "value.h"
@@ -8,20 +9,19 @@
 void disassemble_chunk(Chunk *chunk, const char *name)
 {
     printf("== %s ==\n", name);
-    for (int offset = 0; offset < chunk->count;) {
+    for (int offset = 0; offset < chunk->count;)
         offset = disassemble_instruction(chunk, offset);
-    }
 }
 
 /* disassemble_instruction: disassemble a single instruction. */
 int disassemble_instruction(Chunk *chunk, int offset)
 {
     printf("%04d ", offset);
-    if (offset > 0 && get_line(&chunk->lines, offset)
-            == get_line(&chunk->lines, offset - 1))
+    if (offset > 0 && get_line(chunk, offset)
+            == get_line(chunk, offset - 1))
         printf("   | ");
     else
-        printf("%4d ", get_line(&chunk->lines, offset));
+        printf("%4d ", get_line(chunk, offset));
 
     uint8_t instruction = chunk->code[offset];
     switch (instruction) {
@@ -153,14 +153,4 @@ static int constant_long_instruction(const char *name, Chunk *chunk, int offset)
     print_value(chunk->constants.values[constant]);
     printf("'\n");
     return offset + 4;
-}
-
-/* get_line: get the source line number from a given bytecode offset. */
-int get_line(LineNumberArray *lines, int offset)
-{
-    for (int i = lines->count - 1; i >= 0; i--) {
-        if (lines->line_number_entries[i].bytecode_offset <= offset)
-            return lines->line_number_entries[i].line_number;
-    }
-    return -1;
 }

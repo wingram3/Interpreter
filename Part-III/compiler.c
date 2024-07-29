@@ -192,6 +192,7 @@ static int emit_jump(int instruction)
 /* emit_return: emit a return opcode. */
 static void emit_return()
 {
+    emit_byte(OP_NIL);
     emit_byte(OP_RETURN);
 }
 

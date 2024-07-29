@@ -19,8 +19,8 @@
 
 /* Enum to hold all the object types. */
 typedef enum {
-    OBJ_STRING,
     OBJ_FUNCTION,
+    OBJ_STRING,
 } ObjType;
 
 /* Contains state shared across all object types.
