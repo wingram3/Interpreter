@@ -2,21 +2,30 @@
 #define clox_vm_h
 
 #include "chunk.h"
+#include "object.h"
 #include "table.h"
 #include "value.h"
 
-#define INITIAL_STACK_MAX 256
+#define FRAMES_MAX         64
+#define INITIAL_STACK_MAX  (FRAMES_MAX * UINT8_COUNT)
+
+/* Call frame structure. */
+typedef struct {
+    ObjFunction *function;
+    uint8_t *ip;
+    Value *slots;
+} CallFrame;
 
 /* Virtual machine structure. */
 typedef struct {
-    Chunk *chunk;           // The chunk that the vm executes.
-    uint8_t *ip;            // Instruction pointer.
-    Value *stack;           // Dynamic stack array.
-    Value *stack_top;       // Points just beyond the last element in the stack.
-    Table globals;          // Hash table to store global variables.
-    Table strings;          // Hash table to store strings for string interning.
-    int stack_capacity;     // Max capacity of the stack - dynamically changes as needed.
-    Obj *objects;           // Linked-list of every object.
+    CallFrame frames[FRAMES_MAX];  // Array of call frames.
+    int frame_count;               // current height of the call frame stack.
+    Value *stack;                  // Dynamic stack array.
+    Value *stack_top;              // Points just beyond the last element in the stack.
+    Table globals;                 // Hash table to store global variables.
+    Table strings;                 // Hash table to store strings for string interning.
+    int stack_capacity;            // Max capacity of the stack - dynamically changes as needed.
+    Obj *objects;                  // Linked-list of every object.
 } VM;
 
 /* Enum to hold exit code values. */

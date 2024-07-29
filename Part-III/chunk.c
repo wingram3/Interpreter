@@ -46,10 +46,11 @@ int add_constant(Chunk *chunk, Value value)
 }
 
 /* add_line: adds a LineNumberEntry to the chunk's line number array
-   if the thing being written is on a new line. */
+             if the thing being written is on a new line. */
 void add_line(Chunk *chunk, int line)
 {
-    if (chunk->lines.count == 0 || chunk->lines.line_number_entries[chunk->lines.count - 1].line_number != line) {
+    if (chunk->lines.count == 0 ||
+        chunk->lines.line_number_entries[chunk->lines.count - 1].line_number != line) {
         LineNumberEntry entry;
         entry.bytecode_offset = chunk->count - 1;
         entry.line_number = line;

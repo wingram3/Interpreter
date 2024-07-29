@@ -21,7 +21,17 @@ static Obj *allocate_object(size_t size, ObjType type) {
     return object;
 }
 
-/* allocate_string: creates a new ObjString on the heap and then initializes its fields. */
+/* new_function: creates a new ObjFunction on the heap and initializes its fields. */
+ObjFunction *new_function()
+{
+    ObjFunction *function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
+    function->arity = 0;
+    function->name = NULL;
+    init_chunk(&function->chunk);
+    return function;
+}
+
+/* allocate_string: creates a new ObjString on the heap and initializes its fields. */
 static ObjString *allocate_string(int length, uint32_t hash)
 {
     ObjString *string = (ObjString *)allocate_object(
@@ -77,12 +87,26 @@ ObjString *copy_string(const char *chars, int length)
     return string;
 }
 
+/* print_function: displays a function's name. */
+static void print_function(ObjFunction *function)
+{
+    if (function->name == NULL) {
+        printf("<script>");
+        return;
+    }
+    printf("<fn %s>", function->name->chars);
+}
+
 /* print_object: displays an object's value. */
 void print_object(Value value)
 {
     switch (OBJ_TYPE(value)) {
         case OBJ_STRING: {
             printf("%s", AS_CSTRING(value));
+            break;
+        }
+        case OBJ_FUNCTION: {
+            print_function(AS_FUNCTION(value));
             break;
         }
     }

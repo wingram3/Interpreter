@@ -1,6 +1,7 @@
 #include <stdlib.h>
 
 #include "memory.h"
+#include "object.h"
 #include "vm.h"
 
 /* reallocate: clox dynamic memory management function. */
@@ -21,6 +22,12 @@ static void free_object(Obj *object) {
     switch (object->type) {
         case OBJ_STRING: {
             FREE(ObjString, object);
+            break;
+        }
+        case OBJ_FUNCTION: {
+            ObjFunction *function = (ObjFunction *)object;
+            free_chunk(&function->chunk);
+            FREE(ObjFunction, object);
             break;
         }
     }
