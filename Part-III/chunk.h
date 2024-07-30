@@ -54,13 +54,13 @@ typedef struct {
 
 /* Dynamic array structure to hold sequences of bytecode. */
 typedef struct {
+    uint8_t *code;          // an array of bytes.
     int count;              // number of allocated entries in use.
     int capacity;           // total number of allocated entires.
-    uint8_t *code;          // an array of bytes.
 
-    LineRun *line_runs;     // Array of LineRun structs for RLE of line numbers.
-    int line_run_count;     // Number of LineRun entries.
-    int line_run_capacity;  // Total capacity of the line runs array.
+    LineRun *line_runs;     // array of LineRun structs for RLE of line numbers.
+    int line_run_count;     // number of LineRun entries.
+    int line_run_capacity;  // total capacity of the line runs array.
 
     ValueArray constants;   // constants associated w/ the chunk.
 } Chunk;

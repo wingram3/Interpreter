@@ -725,13 +725,7 @@ static void function(FunctionType type)
     block();
 
     ObjFunction *function = end_compiler();
-    int index = make_constant(OBJ_VAL(function));
-    if (index < 256)
-        emit_bytes(OP_CONSTANT, index, -1);
-    else {
-        emit_byte(OP_CONSTANT_LONG);
-        emit_constant_24bit(index);
-    }
+    emit_constant(OBJ_VAL(function));
 }
 
 /* fun_declaration: funDecl → "fun" function ; */
