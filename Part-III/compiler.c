@@ -14,9 +14,6 @@
 #include "debug.h"
 #endif
 
-#define UINT24_MAX  16777216
-#define MAX_CASES   100
-
 typedef struct {
     Token current;
     Token previous;
@@ -195,6 +192,8 @@ static void emit_return()
     emit_byte(OP_NIL);
     emit_byte(OP_RETURN);
 }
+
+#define UINT24_MAX 16777216
 
 /* make_constant: insert an entry into the constant pool. */
 static int make_constant(Value value)
@@ -929,6 +928,8 @@ static void break_statement()
     current_exit_jump = emit_jump(OP_JUMP);
     consume(TOKEN_SEMICOLON, "Expect ';' after 'break'.");
 }
+
+#define MAX_CASES 100
 
 /* switch_statement: switchStmt  → "switch" "(" expression ")"
                                    "{" switchCase* defaultCase? "}" ;
