@@ -31,6 +31,14 @@ ObjFunction *new_function()
     return function;
 }
 
+/* new_native: creates a new ObjNative. */
+ObjNative *new_native(NativeFn function)
+{
+    ObjNative *native = ALLOCATE_OBJ(ObjNative, OBJ_NATIVE);
+    native->function = function;
+    return native;
+}
+
 /* allocate_string: creates a new ObjString on the heap and initializes its fields. */
 static ObjString *allocate_string(int length, uint32_t hash)
 {
@@ -107,6 +115,10 @@ void print_object(Value value)
         }
         case OBJ_FUNCTION: {
             print_function(AS_FUNCTION(value));
+            break;
+        }
+        case OBJ_NATIVE: {
+            printf("<native fn>");
             break;
         }
     }

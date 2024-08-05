@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "chunk.h"
 #include "common.h"
@@ -15,6 +16,12 @@
 #include "debug.h"
 
 VM vm;  // Single global virtual machine object.
+
+/* clock_native: native clock function. */
+static Value clock_native(int arg_count, Value *args)
+{
+    return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
+}
 
 /* reset_stack: sets the stck pointer to the first element in the stack. */
 static void reset_stack()
@@ -46,6 +53,16 @@ static void runtime_error(const char *format, ...)
     reset_stack();
 }
 
+/* define_native: define a new native function exposed to lox programs. */
+static void define_native(const char *name, NativeFn function)
+{
+    push(OBJ_VAL(copy_string(name, (int)strlen(name))));
+    push(OBJ_VAL(new_native(function)));
+    table_set(&vm.globals, AS_STRING(vm.stack[0]), vm.stack[1]);
+    pop();
+    pop();
+}
+
 /* init_vm: initialize the virtual machine. */
 void init_vm()
 {
@@ -55,6 +72,8 @@ void init_vm()
     vm.stack_capacity = INITIAL_STACK_MAX;
     init_table(&vm.globals);
     init_table(&vm.strings);
+
+    define_native("clock", clock_native);
 }
 
 /* free_vm: free the virtual machine's memory. */
@@ -117,7 +136,16 @@ static bool call_value(Value callee, int arg_count)
 {
     if (IS_OBJ(callee))
         switch (OBJ_TYPE(callee)) {
-            case OBJ_FUNCTION: return call(AS_FUNCTION(callee), arg_count);
+            case OBJ_FUNCTION: {
+                return call(AS_FUNCTION(callee), arg_count);
+            }
+            case OBJ_NATIVE: {
+                NativeFn native = AS_NATIVE(callee);
+                Value result = native(arg_count, vm.stack_top - arg_count);
+                vm.stack_top -= arg_count + 1;
+                push(result);
+                return true;
+            }
             default: break;
         }
     runtime_error("Can only call functions and classes.");

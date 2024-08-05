@@ -10,16 +10,19 @@
 
 // Macros to check the object types of objects.
 #define IS_FUNCTION(value)  is_obj_type(value, OBJ_FUNCTION)
+#define IS_NATIVE(value)    is_obj_type(value, OBJ_NATIVE)
 #define IS_STRING(value)    is_obj_type(value, OBJ_STRING)
 
 // Macros to cast a value to an object type.
 #define AS_FUNCTION(value)  ((ObjFunction *)AS_OBJ(value))
+#define AS_NATIVE(value)    (((ObjNative *)AS_OBJ(value))->function)
 #define AS_STRING(value)    ((ObjString *)AS_OBJ(value))
 #define AS_CSTRING(value)   (((ObjString *)AS_OBJ(value))->chars)
 
 /* Enum to hold all the object types. */
 typedef enum {
     OBJ_FUNCTION,
+    OBJ_NATIVE,
     OBJ_STRING,
 } ObjType;
 
@@ -38,6 +41,13 @@ typedef struct {
     ObjString *name;    // The name of the function.
 } ObjFunction;
 
+typedef Value (*NativeFn)(int arg_count, Value *args);
+
+typedef struct {
+    Obj obj;
+    NativeFn function;
+} ObjNative;
+
 /* Payload for string objects. */
 struct ObjString {
     Obj obj;
@@ -47,6 +57,7 @@ struct ObjString {
 };
 
 ObjFunction *new_function();
+ObjNative *new_native(NativeFn function);
 ObjString *take_string(char* chars, int length);
 ObjString *copy_string(const char *chars, int length);
 void print_object(Value value);
