@@ -433,7 +433,7 @@ static InterpretResult run()
                 printf("\n");
                 break;
             }
-            //
+            // Call a function.
             case OP_CALL: {
                 int arg_count = READ_BYTE();
                 if (!call_value(peek(arg_count), arg_count))
